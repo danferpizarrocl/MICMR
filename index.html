@@ -466,6 +466,18 @@ details.exp>summary,.eov{background:var(--exb);color:var(--exf);border:1px solid
 :root[data-theme="dark"] .okb.fl.err{background:#ff9a98;color:#3a0b0a;border-color:#ff9a98}
 
 </style></head><body>
+<div id="splash"><div class="spc"><svg width="200" height="200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="0" fill="#2f6df0"/>
+<rect x="84" y="140" width="344" height="232" rx="34" fill="#fff"/>
+<rect x="84" y="186" width="344" height="40" fill="#cfdcfb"/>
+<rect x="116" y="256" width="52" height="38" rx="9" fill="#f5b72f"/>
+<g fill="#2f6df0"><rect x="266" y="318" width="34" height="34" rx="7"/><rect x="312" y="296" width="34" height="56" rx="7"/><rect x="358" y="268" width="34" height="84" rx="7"/></g>
+<path d="M262 300 L322 270 L368 240" stroke="#e8573c" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0"/></svg><div class="spn">MiCMR</div></div><div class="spv" id="spv"></div></div>
+<style>#splash{position:fixed;inset:0;z-index:9999;background:#2f6df0;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .45s ease;font-family:'DM Sans',system-ui,sans-serif}
+#splash.hide{opacity:0;pointer-events:none}
+#splash .spc{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:-4vh}
+#splash .spn{font-size:38px;font-weight:800;letter-spacing:-.01em}
+#splash .spv{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 34px);text-align:center;font-size:15px;font-weight:700;opacity:.9}</style>
+<script>window.SPL=1500;(function(){var v=document.getElementById('spv');if(v)v.textContent='Versión '+(self.APP_VERSION||'');var s=document.getElementById('splash');function h(){if(!s)return;var e=s;s=null;e.classList.add('hide');setTimeout(function(){if(e.parentNode)e.parentNode.removeChild(e);},520);}s.addEventListener('click',h);setTimeout(h,1500);})();</script>
 <div id="app"></div>
 <nav class="nv" aria-label="Menú principal"><div class="nv-in"><button data-t="0" type="button">@@home@@<span>Inicio</span></button><button data-t="1" type="button">@@search@@<span>Buscar</span></button><button data-t="2" type="button">@@more@@<span>Más</span></button></div></nav>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -1292,7 +1304,7 @@ const SCR={
    let h='<div class="anl full"><button class="big xl" data-go="year:'+y+'" style="--cc:var(--a);background:var(--a)"><span class="wrapI"><span>'+svgI('cal',140,1.2)+'</span><span>'+svgI('bars',140,1.2)+'</span><span>'+svgI('card',140,1.2)+'</span></span><span class="chip o">AÑO ACTUAL</span><span class="by">'+y+'</span><span class="bs b2">'+ff(d.tot)+'</span><span class="bs s b3">'+nn(d.n)+' · '+(y===cp.y?MESL[cp.m]:'Año cerrado')+'</span></button>'+
     '<div class="anr"><button class="big l" data-go="histyears" style="--cc:var(--p);background:var(--p)"><span class="tgl in p" role="button" tabindex="0" data-act="theme" aria-label="'+(dk?'Cambiar a tema claro':'Cambiar a tema oscuro')+'">'+svgI(dk?'sun':'moon',28,2)+'</span><span class="bic">'+svgI('trend',112,1.3)+'</span><span class="bt">Histórico</span><span class="bs s">'+YEARS[0]+'-'+YEARS[YEARS.length-1]+'</span></button>'+
     '<button class="big l" data-go="cmp" style="--cc:var(--t);background:var(--t)"><span class="bic">'+svgI('scale',112,1.3)+'</span><span class="bt">Comparar dos años</span><span class="bs s">Un año contra otro</span></button></div></div>';
-   if(!OKT) OKT=Date.now();
+   if(!OKT) OKT=Date.now()+(window.SPL||0);
    const okl=8000-(Date.now()-OKT);
    if(!SAVE_OK) h+='<div class="okb fl err" id="okb">No se pudo guardar en este navegador, haz un respaldo · <span>Última actualización: '+(DATA.cargado?fcarga(DATA.cargado):'sin fecha')+'</span></div>';
    else if(okl>0) h+='<div class="okb fl" id="okb" data-act="okx" style="animation-delay:'+Math.max(0,okl-500)+'ms">'+svgI('check',14,2.6)+' Última actualización: '+(DATA.cargado?fcarga(DATA.cargado):'sin fecha')+'</div>';
@@ -1440,6 +1452,6 @@ themeApply(); loadAll(); render();
 
 
 (function(){document.querySelectorAll('.nv button').forEach(function(b){var m=b.innerHTML.match(/@@(\w+)@@/);if(m)b.innerHTML=b.innerHTML.replace(m[0],svgI(m[1],22,2));});})();
-if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(function(){});});}
 </script>
 </body></html>
