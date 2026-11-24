@@ -454,6 +454,16 @@ details.exp>summary,.eov{background:var(--exb);color:var(--exf);border:1px solid
 .hdt.hasseg .ct .u{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hdt.hasseg .seg{flex:none;align-self:center;padding:2px}
 .hdt.hasseg .seg button{padding:6px 9px;font-size:12px;display:inline-flex;align-items:center;gap:3px}
+/* 1.1 cuadro de actualización flotante en el Inicio */
+.anl.full{height:calc(100dvh - 124px)}
+.okb.fl{position:fixed;z-index:40;left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px));top:calc(env(safe-area-inset-top,0px) + 12px);max-width:488px;margin:0 auto;justify-content:center;text-align:center;padding:12px 14px;font-size:13px;
+ background:color-mix(in srgb,var(--g) 24%,transparent);color:color-mix(in srgb,var(--g) 62%,#000);border:1.5px solid color-mix(in srgb,var(--g) 60%,transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);box-shadow:var(--shadow);
+ animation:okout .5s ease forwards}
+.okb.fl.err{background:color-mix(in srgb,var(--r) 24%,transparent);color:color-mix(in srgb,var(--r) 62%,#000);border-color:color-mix(in srgb,var(--r) 60%,transparent);animation:none;flex-wrap:wrap}
+@keyframes okout{to{opacity:0;visibility:hidden;transform:translateY(-8px)}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .okb.fl{background:#6fe0b0;color:#07281c;border-color:#6fe0b0;-webkit-backdrop-filter:none;backdrop-filter:none}:root:not([data-theme="light"]) .okb.fl.err{background:#ff9a98;color:#3a0b0a;border-color:#ff9a98}}
+:root[data-theme="dark"] .okb.fl{background:#6fe0b0;color:#07281c;border-color:#6fe0b0;-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-theme="dark"] .okb.fl.err{background:#ff9a98;color:#3a0b0a;border-color:#ff9a98}
 
 </style></head><body>
 <div id="app"></div>
@@ -1265,6 +1275,7 @@ function ultimasCard(y){
 const $=id=>document.getElementById(id);
 function tabOf(r){ const k=r.split(':')[0]; if(k==='buscar') return 1; if(['mas','resp','orden'].includes(k)) return 2; return 0; }
 function title(r){ return r; }
+let OKT=0;
 function head(t,icon,c,sub){ return '<header class="hd"><div class="hdt">'+themeBtn()+ct(icon,t,c)+'</div>'+(sub?'<p class="sub">'+sub+'</p>':'')+'</header>'; }
 function fcarga(iso){ const t=new Date(iso); if(isNaN(t)) return '–'; const p=n=>String(n).padStart(2,'0'); return p(t.getDate())+' '+MESS[t.getMonth()]+' '+t.getFullYear()+', '+p(t.getHours())+':'+p(t.getMinutes()); }
 const MBAR={y:['meses','donde','records','como','radio'],h:['meses','anios','acum','rubros','empresas'],c:['acum','prom','online']};
@@ -1281,7 +1292,10 @@ const SCR={
    let h='<div class="anl full"><button class="big xl" data-go="year:'+y+'" style="--cc:var(--a);background:var(--a)"><span class="wrapI"><span>'+svgI('cal',140,1.2)+'</span><span>'+svgI('bars',140,1.2)+'</span><span>'+svgI('card',140,1.2)+'</span></span><span class="chip o">AÑO ACTUAL</span><span class="by">'+y+'</span><span class="bs b2">'+ff(d.tot)+'</span><span class="bs s b3">'+nn(d.n)+' · '+(y===cp.y?MESL[cp.m]:'Año cerrado')+'</span></button>'+
     '<div class="anr"><button class="big l" data-go="histyears" style="--cc:var(--p);background:var(--p)"><span class="tgl in p" role="button" tabindex="0" data-act="theme" aria-label="'+(dk?'Cambiar a tema claro':'Cambiar a tema oscuro')+'">'+svgI(dk?'sun':'moon',28,2)+'</span><span class="bic">'+svgI('trend',112,1.3)+'</span><span class="bt">Histórico</span><span class="bs s">'+YEARS[0]+'-'+YEARS[YEARS.length-1]+'</span></button>'+
     '<button class="big l" data-go="cmp" style="--cc:var(--t);background:var(--t)"><span class="bic">'+svgI('scale',112,1.3)+'</span><span class="bt">Comparar dos años</span><span class="bs s">Un año contra otro</span></button></div></div>';
-   h+='<div class="okb">'+svgI('check',14,2.6)+' Última actualización: '+(DATA.cargado?fcarga(DATA.cargado):'sin fecha')+(SAVE_OK?'':' · <b>No se pudo guardar en este navegador, haz un respaldo</b>')+'</div>';
+   if(!OKT) OKT=Date.now();
+   const okl=8000-(Date.now()-OKT);
+   if(!SAVE_OK) h+='<div class="okb fl err" id="okb">No se pudo guardar en este navegador, haz un respaldo · <span>Última actualización: '+(DATA.cargado?fcarga(DATA.cargado):'sin fecha')+'</span></div>';
+   else if(okl>0) h+='<div class="okb fl" id="okb" data-act="okx" style="animation-delay:'+Math.max(0,okl-500)+'ms">'+svgI('check',14,2.6)+' Última actualización: '+(DATA.cargado?fcarga(DATA.cargado):'sin fecha')+'</div>';
    return h;
  },
  histyears(){
@@ -1412,6 +1426,7 @@ document.addEventListener('click',e=>{
   else if(a==='cpick'){ MSEL[p[0]]=+p[1]; render(); }
   else if(a==='sy'){ SEARCH.y=p[0]; render(); const q=$('q'); if(q) q.focus(); }
   else if(a==='theme'){ const y=window.scrollY||0; themeToggle(); render(); window.scrollTo&&window.scrollTo(0,y); stuckUpd(); }
+  else if(a==='okx'){ OKT=1; const e=document.getElementById('okb'); if(e) e.remove(); }
   else if(a==='reset'){ STACK=[]; ROUTE='home'; render(); }
 });
 function stuckUpd(){ try{ const h=document.querySelector('.hdt'); const hh=h?h.offsetHeight:0; document.documentElement.style.setProperty('--hdh',hh+'px'); if(h) h.classList.toggle('stuck',h.getBoundingClientRect().top<=1); const w=document.querySelector('.mswrap'); if(w) w.classList.toggle('stuck',w.getBoundingClientRect().top<=hh+1); }catch(e){} }
