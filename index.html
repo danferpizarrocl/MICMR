@@ -974,7 +974,8 @@ function yResumen(y){
   const tg=topN(d.rows,1,'v')[0], tu=topN(d.rows,1,'n')[0], nmz=Math.max(1,cmg.length);
   let h=totTile('Total del año '+y,ff(d.tot),(delta(c,txt)||'Sin año anterior para comparar')+(inprog?' · datos al '+String(cp.d).padStart(2,'0')+' '+MESS[cp.m]:''));
   tilesBegin();
-  h+=mini('box','Total de compras','p',nn(d.n),'Promedio '+ff(d.n?d.tot/d.n:0)+' c/u');
+  let cn=null; if(py!==null){ const pd=Y(py), pn=inprog?pd.mu.slice(0,last+1).reduce((u,v)=>u+v,0):pd.n; cn=dl(d.n,pn); }
+  h+=mini('box','Total de compras','p',nn(d.n),'Promedio '+ff(d.n?d.tot/d.n:0)+' c/u'+(cn!==null?'<br>'+delta(cn,txt):''));
   h+=mini('cash','Promedio diario','a',ff(d.tot/days),dec2(d.n/days)+' usos/día · base '+days+' días');
   h+=mini('cal','Promedio mensual','t',ff(d.tot/12),dec1(d.n/12)+' usos/mes · total ÷ 12');
   h+=mini('shop','Comercio con mayor gasto','o',tg?esc(tg.k):'–',tg?ff(tg.v)+' · '+pc(tg.v/d.tot)+' del gasto':'');
