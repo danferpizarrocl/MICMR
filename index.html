@@ -524,6 +524,25 @@ body[data-r="cuotas"] .hd .ct .u{white-space:normal;overflow:visible;text-overfl
 .rkt b{font-size:19px;font-weight:700}.rkr.on .rkt b{color:var(--al)}.rkt span{font-size:19px;font-weight:800;white-space:nowrap}
 .rkl{height:9px;border-radius:6px;background:var(--bd);margin-top:5px;overflow:hidden}.rkl i{display:block;height:100%;border-radius:6px}
 
+/* 1.12 J: cuadros verdes al cargar el Excel */
+#jov{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(10,16,30,.38);-webkit-tap-highlight-color:transparent}
+#jov .jc{position:relative;width:100%;max-width:360px;min-height:250px;display:flex;flex-direction:column;border-radius:22px;padding:18px 18px 14px;border:2.5px solid #12805a;background:rgba(27,154,107,.24);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#0b4d37;box-shadow:0 12px 34px rgba(0,0,0,.28)}
+:root[data-theme="dark"] #jov .jc{background:#0f5d44;border-color:#6fe0b0;color:#e9fff6}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #jov .jc{background:#0f5d44;border-color:#6fe0b0;color:#e9fff6}}
+#jov .jc .ct{font-size:19px;margin:0 0 12px;padding-right:38px;color:inherit}
+#jov .jx{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:2px solid currentColor;background:transparent;color:inherit;font-size:16px;font-weight:800;line-height:1}
+#jov .jl{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:11px;flex:1}
+#jov .jl li{display:flex;justify-content:space-between;gap:10px;font-size:16px;font-weight:600;line-height:1.3}
+#jov .jl li b{font-weight:800;text-align:right}
+#jov .jh li{justify-content:flex-start;align-items:flex-start;gap:10px;font-weight:700}
+#jov .jh li i{flex:none;display:flex;margin-top:1px}
+#jov .jp{margin:6px 0;font-size:17px;font-weight:700;flex:1}
+#jov .jw{margin:10px 0 0;font-size:13px;font-weight:800}
+#jov .jn{margin-top:14px;font-size:12.5px;opacity:.85;text-align:center;font-weight:700}
+#jov .jc{height:340px;min-height:0}
+#jov .jl{overflow:hidden}
+#jov .jh li span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
 </style></head><body>
 <div id="splash"><div class="spc"><svg width="200" height="200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="0" fill="#2f6df0"/>
 <rect x="84" y="140" width="344" height="232" rx="34" fill="#fff"/>
@@ -1346,6 +1365,88 @@ function ultimasCard(y){
 }
 
 
+/* ---------- Cuadros al cargar el Excel: cambios + hitos ---------- */
+function jKey(c){ return c.y+'|'+c.m+'|'+c.d+'|'+c.n+'|'+c.v; }
+function jDiff(oldA,newA){
+  const mo=new Map(); oldA.forEach(c=>{ const k=jKey(c); mo.set(k,(mo.get(k)||0)+1); });
+  const added=[]; newA.forEach(c=>{ const k=jKey(c), n=mo.get(k)||0; if(n>0) mo.set(k,n-1); else added.push(c); });
+  const removed=[]; oldA.forEach(c=>{ const k=jKey(c), n=mo.get(k)||0; if(n>0){ removed.push(c); mo.set(k,n-1); } });
+  return {added,removed};
+}
+function jSum(a){ let s=0; a.forEach(c=>{ s+=c.v; }); return s; }
+function jFecha(c){ return c.d+' '+MESS[c.m]+' '+c.y; }
+function jPl(n,s,p){ return nn(n)+' '+(n===1?s:p); }
+function jHitos(oldA,newA,added){
+  const ok=c=>!c.dev&&c.v>=0, O=oldA.filter(ok), N=newA.filter(ok), H=[];
+  if(!N.length) return H;
+  const L=Math.max.apply(null,N.map(c=>c.y)), py=L-1, hasPy=N.some(c=>c.y===py);
+  const yr=(A,y)=>A.filter(c=>c.y===y), mo=(A,y,m)=>A.filter(c=>c.y===y&&c.m===m);
+  const NL=yr(N,L), OL=yr(O,L), NP=yr(N,py);
+  const PL=NL.filter(c=>c.v>0), PO=OL.filter(c=>c.v>0), lastN=PL.length?Math.max.apply(null,PL.map(c=>c.m)):-1, lastO=PO.length?Math.max.apply(null,PO.map(c=>c.m)):-1;
+  const bO=jSum(OL), bN=jSum(NL), cO=OL.length, cN=NL.length;
+  const push=(ic,t)=>H.push({ic:ic,t:t});
+  // 20: gasto del año cruza cada $1.000.000
+  if(bN>bO&&Math.floor(bN/1e6)>Math.floor(bO/1e6)) push('target','Tu gasto de '+L+' superó los <b>'+ff(Math.floor(bN/1e6)*1e6)+'</b>');
+  // 1/2 y 3: superar todo el año anterior
+  let f12=false,f3=false;
+  if(hasPy){ const pn=NP.length, pt=jSum(NP);
+    if(cO<=pn&&cN>pn){ f12=true; push('trend','Superaste las compras de todo <b>'+py+'</b> ('+nn(cN)+' contra '+nn(pn)+')'); }
+    if(bO<=pt&&bN>pt){ f3=true; push('trend','Tu gasto de '+L+' ya supera el de todo <b>'+py+'</b>'); }
+    // 4: hasta la misma fecha del año anterior
+    if(lastN>=0){ const refN=NP.filter(c=>c.m<=lastN), refO=lastO>=0?NP.filter(c=>c.m<=lastO):[], per='ene–'+MESS[lastN];
+      if(!f12&&cN>refN.length&&!(cO>refO.length)&&cN>0) push('trend','Tus compras de '+L+' ya superan las de '+py+' ('+per+')');
+      if(!f3&&bN>jSum(refN)&&!(bO>jSum(refO))&&bN>0) push('trend','Tu gasto de '+L+' ya supera el de '+py+' ('+per+')'); } }
+  // 38/32/37/31/9/39: compras más grande y más pequeña
+  const pos=A=>A.filter(c=>c.v>0), mx=A=>pos(A).reduce((a,c)=>(!a||c.v>a.v)?c:a,null), mn=A=>pos(A).reduce((a,c)=>(!a||c.v<a.v)?c:a,null);
+  const txt=(w,c)=>w+': <b>'+ff(c.v)+'</b> · '+esc(c.n)+' ('+jFecha(c)+')';
+  const used=[]; const nuevo=(c)=>used.indexOf(c)<0;
+  const rec=(ic,w,A0,A1,fn,less)=>{ const a0=fn(A0), a1=fn(A1); if(!a0||!a1) return; if(less?a1.v<a0.v:a1.v>a0.v){ if(nuevo(a1)){ used.push(a1); push(ic,txt(w,a1)); } } };
+  rec('up','Nueva compra más grande de la historia',O,N,mx,false);
+  rec('down','Nueva compra más pequeña de la historia',O,N,mn,true);
+  rec('up','Nueva compra más grande de '+L,OL,NL,mx,false);
+  rec('down','Nueva compra más pequeña de '+L,OL,NL,mn,true);
+  if(lastN>=0){ const MN=mo(N,L,lastN), MO=mo(O,L,lastN);
+    rec('up','Nueva compra más grande de '+MESL[lastN].toLowerCase(),MO,MN,mx,false);
+    rec('down','Nueva compra más pequeña de '+MESL[lastN].toLowerCase(),MO,MN,mn,true);
+    // 7: gasto del mes supera al mes anterior
+    let pm=lastN-1, pyy=L; if(pm<0){ pm=11; pyy=L-1; }
+    const pt=jSum(mo(N,pyy,pm)), a0=jSum(MO), a1=jSum(MN);
+    if(pt>0&&a0<=pt&&a1>pt) push('bars','El gasto de '+MESL[lastN].toLowerCase()+' ya superó al de '+MESL[pm].toLowerCase()); }
+  // 17: cuotas nuevas
+  const cu=added.filter(c=>!c.dev&&c.c>0).length; if(cu>0) push('card','<b>'+jPl(cu,'compra en cuotas nueva','compras en cuotas nuevas')+'</b>');
+  // 18: devoluciones nuevas (solo la cantidad)
+  const dv=added.filter(c=>c.dev).length; if(dv>0) push('ret','<b>'+jPl(dv,'devolución nueva','devoluciones nuevas')+'</b>');
+  return H;
+}
+function jCards(OLD,d){
+  const N=d.compras, tl=ct('card','Excel cargado','g');
+  if(!OLD||!OLD.compras||!OLD.compras.length) return [{t:tl,b:'<ul class="jl"><li><span>Compras cargadas</span><b>'+nn(N.length)+'</b></li><li><span>Años</span><b>'+YEARS[0]+' a '+YEARS[YEARS.length-1]+'</b></li></ul>'+(SAVE_OK?'':'<p class="jw">No se pudo guardar en este navegador, haz un respaldo.</p>')}];
+  const df=jDiff(OLD.compras,N), ok=c=>!c.dev, aN=df.added.filter(ok).length, rN=df.removed.filter(ok).length;
+  const cards=[], warn=SAVE_OK?'':'<p class="jw">No se pudo guardar en este navegador, haz un respaldo.</p>';
+  if(!df.added.length&&!df.removed.length) cards.push({t:tl,b:'<p class="jp">Sin cambios: el Excel es igual al que ya tenías.</p>'+warn});
+  else{
+    const rows=N.filter(ok), L=Math.max.apply(null,rows.map(c=>c.y)), tn=jSum(rows.filter(c=>c.y===L)), to=jSum(OLD.compras.filter(c=>!c.dev&&c.y===L));
+    const last=rows.filter(c=>c.v>0).reduce((a,c)=>(!a||(c.y*10000+c.m*100+c.d)>(a.y*10000+a.m*100+a.d))?c:a,null);
+    let li='<li><span>Compras nuevas</span><b>+'+nn(aN)+'</b></li><li><span>Compras que ya no están</span><b>'+nn(rN)+'</b></li>';
+    if(tn!==to) li+='<li><span>Total de '+L+'</span><b>'+(tn>to?'▲ ':'▼ ')+ff(Math.abs(tn-to))+'</b></li>';
+    if(last) li+='<li><span>Última compra</span><b>'+jFecha(last)+'</b></li>';
+    cards.push({t:tl,b:'<ul class="jl">'+li+'</ul>'+warn});
+  }
+  const H=jHitos(OLD.compras,N,df.added), np=Math.ceil(H.length/3);
+  for(let p=0;p<np;p++) cards.push({t:ct('star','Hitos de esta carga','g'),n:np>1?(p+1)+' de '+np:'',b:'<ul class="jl jh">'+H.slice(p*3,p*3+3).map(h=>'<li><i>'+svgI(h.ic,22,2)+'</i><span>'+h.t+'</span></li>').join('')+'</ul>'});
+  return cards;
+}
+let JCARDS=[],JI=0;
+function jShow(cards){ JCARDS=cards; JI=0; jRender(); }
+function jRender(){
+  let o=document.getElementById('jov');
+  if(JI>=JCARDS.length){ if(o) o.remove(); JCARDS=[]; return; }
+  if(!o){ o=document.createElement('div'); o.id='jov'; document.body.appendChild(o);
+    o.addEventListener('click',function(ev){ if(ev.target.closest('.jx')){ JCARDS=[]; JI=0; o.remove(); } else { JI++; jRender(); } ev.stopPropagation(); }); }
+  const c=JCARDS[JI], fin=JI===JCARDS.length-1;
+  o.innerHTML='<div class="jc" role="dialog" aria-label="Aviso de carga"><button class="jx" type="button" aria-label="Cerrar todo">✕</button>'+c.t+c.b+'<div class="jn">'+(c.n?c.n+' · ':'')+(fin?'Toca para cerrar':'Toca para continuar')+'</div></div>';
+}
+
 /* ===== MiCMR beta · pantallas, rutas y eventos ===== */
 const $=id=>document.getElementById(id);
 function tabOf(r){ const k=r.split(':')[0]; if(k==='buscar') return 1; if(['mas','resp','orden'].includes(k)) return 2; return 0; }
@@ -1465,8 +1566,8 @@ async function loadExcel(file){
     toast('Leyendo Excel…'); const buf=await file.arrayBuffer(); const sh=await readWorkbook(buf);
     if(!Object.keys(sh).some(n=>/^CMR \d{4}/.test(n))) throw new Error('No encontré hojas con nombre "CMR 2026", "CMR 2025", etc. ¿Es el archivo correcto?');
     const d=buildData(sh); if(!d.compras.length) throw new Error('Las hojas de CMR no tienen compras que leer.');
-    DATA=d; prep(); saveAll(); STACK=[]; ROUTE='home'; render();
-    toast('Listo: '+nn(d.compras.length)+' filas de '+YEARS[0]+' a '+YEARS[YEARS.length-1]+(SAVE_OK?'':' (sin guardar en este navegador)'));
+    const OLD=DATA; DATA=d; prep(); saveAll(); STACK=[]; ROUTE='home'; OKT=1; render(); toast('',false); $('toast').className='toast';
+    jShow(jCards(OLD,d));
   }catch(e){ toast('No pude leer el Excel. '+e.message,true); }
 }
 async function importJson(file){
