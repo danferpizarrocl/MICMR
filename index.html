@@ -1474,6 +1474,7 @@ function fitHome(){ try{ const app=document.getElementById('app'), g=document.qu
 window.addEventListener&&window.addEventListener('resize',fitHome);
 function stuckUpd(){ try{ const h=document.querySelector('.hdt'); const hh=h?h.offsetHeight:0; document.documentElement.style.setProperty('--hdh',hh+'px'); if(h) h.classList.toggle('stuck',h.getBoundingClientRect().top<=1); const w=document.querySelector('.mswrap'); if(w) w.classList.toggle('stuck',w.getBoundingClientRect().top<=hh+1); }catch(e){} }
 window.addEventListener&&window.addEventListener('scroll',stuckUpd,{passive:true});
+document.addEventListener('keydown',e=>{ if(e.target&&e.target.id==='q'&&(e.key==='Enter'||e.keyCode===13)){ e.preventDefault(); e.target.blur(); } });
 document.addEventListener('input',e=>{ if(e.target.id==='q'){ SEARCH.q=e.target.value; const r=$('res'); if(r) r.innerHTML=searchRes(); } });
 document.addEventListener('change',e=>{
   const f=e.target.files&&e.target.files[0]; if(!f) return;
