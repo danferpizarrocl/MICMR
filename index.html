@@ -711,7 +711,22 @@ function dec1(v){ return v.toFixed(1).replace('.',','); }
 function rubroName(r){ if(!r) return 'Otros'; if(r.length<=3||/[^A-ZÁÉÍÓÚÑ\s]/.test(r)) return r; return r.charAt(0)+r.slice(1).toLowerCase(); }
 function fdate(c){ return String(c.d).padStart(2,'0')+' '+MESS[c.m]; }
 
+function pairDev(){
+  if(!DATA||!DATA.compras) return;
+  const C=DATA.compras, drop=new Set();
+  C.forEach(d=>{
+    if(!d.dev) return;
+    const t=d.n.replace(/devoluci[oó]n\s*\d*/ig,' ').replace(/\s+/g,' ').trim(), m=t.match(/^(\S+)\s+(\d+)(?=\s|$)/);
+    if(!m) return;
+    const em=m[1].toLowerCase(), nu=m[2];
+    const cand=C.filter(c=>!c.dev&&!drop.has(c)&&c.y===d.y&&(()=>{ const q=c.n.replace(/\s+/g,' ').trim().match(/^(\S+)\s+(\d+)(?=\s|$)/); return q&&q[1].toLowerCase()===em&&q[2]===nu; })());
+    const pick=cand.find(c=>c.v===-d.v)||(cand.length===1?cand[0]:null);
+    if(pick) drop.add(pick);
+  });
+  if(drop.size) DATA.compras=C.filter(c=>!drop.has(c));
+}
 function prep(){
+  pairDev();
   CACHE={}; YEARS=DATA?[...new Set(DATA.compras.map(c=>c.y))].sort((a,b)=>a-b):[];
 }
 function curPos(){
