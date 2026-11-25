@@ -1462,7 +1462,7 @@ function okCard(delay,y,d){
   return '<div class="okb fl" id="okb" data-act="okx" style="animation-delay:'+delay+'ms"><div class="okt">'+svgI('check',20,2.6)+' Última actualización</div>'
    +'<div class="okd">'+(ok?p(t.getDate())+' '+MESS[t.getMonth()]+' '+t.getFullYear():'Sin fecha')+'</div>'
    +(ok?'<div class="okh">'+p(t.getHours())+':'+p(t.getMinutes())+'</div><div class="oks">'+agoTxt(DATA.cargado)+'</div>':'')
-   +'<div class="oks">'+nn(DATA.compras.length)+' filas · '+nn(d.n)+' compras '+y+'</div></div>'; }
+   +'</div>'; }
 function head(t,icon,c,sub){ return '<header class="hd"><div class="hdt">'+themeBtn()+ct(icon,t,c)+'</div>'+(sub?'<p class="sub">'+sub+'</p>':'')+'</header>'; }
 function fcarga(iso){ const t=new Date(iso); if(isNaN(t)) return '–'; const p=n=>String(n).padStart(2,'0'); return p(t.getDate())+' '+MESS[t.getMonth()]+' '+t.getFullYear()+', '+p(t.getHours())+':'+p(t.getMinutes()); }
 const MBAR={y:['meses','donde','records','como','radio'],h:['meses','anios','acum','rubros','empresas'],c:['acum','prom','online']};
