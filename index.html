@@ -1538,7 +1538,7 @@ const SCR={
 function searchRes(){
   if(!DATA) return '';
   const q=norm(SEARCH.q.trim()), qn=q.replace(/[.$\s]/g,'');
-  let rows=DATA.compras.filter(c=>!c.dev);
+  let rows=DATA.compras.filter(c=>!c.dev&&c.v!==0);
   if(SEARCH.y!=='all') rows=rows.filter(c=>String(c.y)===SEARCH.y);
   if(q) rows=rows.filter(c=>norm(c.n).includes(q)||(/^\d+$/.test(qn)&&String(Math.abs(c.v)).includes(qn)));
   rows=rows.slice().sort((a,b)=>b.y-a.y||b.m-a.m||b.d-a.d||b.r-a.r);
