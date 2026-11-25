@@ -1319,7 +1319,7 @@ const SCR={
    const cp=curPos(), y=YEARS[YEARS.length-1], d=Y(y), a=histAgg();
    const dk=themeEff()==='dark';
    let h='<div class="anl full"><button class="big xl" data-go="year:'+y+'" style="--cc:var(--a);background:var(--a)"><span class="wrapI"><span>'+svgI('cal',140,1.2)+'</span><span>'+svgI('bars',140,1.2)+'</span><span>'+svgI('card',140,1.2)+'</span></span><span class="chip o">AÑO ACTUAL</span><span class="by">'+y+'</span><span class="bs b2">'+ff(d.tot)+'</span><span class="bs s b3">'+nn(d.n)+' · '+(y===cp.y?MESL[cp.m]:'Año cerrado')+'</span></button>'+
-    '<div class="anr"><button class="big l" data-go="histyears" style="--cc:var(--p);background:var(--p)"><span class="tgl in p" role="button" tabindex="0" data-act="theme" aria-label="'+(dk?'Cambiar a tema claro':'Cambiar a tema oscuro')+'">'+svgI(dk?'sun':'moon',28,2)+'</span><span class="bic">'+svgI('trend',112,1.3)+'</span><span class="bt">Histórico</span></button>'+
+    '<div class="anr"><button class="big l" data-go="histyears" style="--cc:var(--p);background:var(--p)"><span class="tgl in p" role="button" tabindex="0" data-act="theme" aria-label="'+(dk?'Cambiar a tema claro':'Cambiar a tema oscuro')+'">'+svgI(dk?'sun':'moon',28,2)+'</span><span class="bic">'+svgI('trend',112,1.3)+'</span><span class="bt">Histórico</span><span class="bs s">'+YEARS[0]+'-'+YEARS[YEARS.length-1]+'</span></button>'+
     '<button class="big l" data-go="cmp" style="--cc:var(--t);background:var(--t)"><span class="bic">'+svgI('scale',112,1.3)+'</span><span class="bt">Comparar dos años</span><span class="bs s">Un año contra otro</span></button></div></div>';
    if(!OKT) OKT=Date.now()+(window.SPL||0);
    const okl=3000-(Date.now()-OKT);
