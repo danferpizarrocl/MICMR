@@ -492,6 +492,10 @@ details.exp>summary,.eov{background:var(--exb);color:var(--exf);border:1px solid
 .big.hy.big2 .bs{font-size:15px}
 @media (max-width:380px){.hdt.hr .ct{font-size:18px}.hdt.hr .rng{font-size:12px}}
 
+/* 1.7 Todo el histórico: rango dentro del mismo título (misma letra y subrayado) */
+.hdt.hr .ct{font-size:clamp(13px,4.35vw,20px)}
+@media (max-width:380px){.hdt.hr .ct{font-size:clamp(13px,4.35vw,20px)}}
+
 </style></head><body>
 <div id="splash"><div class="spc"><svg width="200" height="200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="0" fill="#2f6df0"/>
 <rect x="84" y="140" width="344" height="232" rx="34" fill="#fff"/>
@@ -1350,7 +1354,7 @@ const SCR={
    h+='<button class="big l hy" data-go="hist" style="--cc:var(--r);background:var(--r)"><span class="bic">'+svgI('bars',64,1.6)+'</span><span class="bt">HISTÓRICO</span><span class="bs s">Resumen, meses, rubros, empresas</span></button><h3 class="sec">Por año</h3><div class="tg y">'+YEARS.slice().reverse().map(y=>'<button class="tile yr" data-go="year:'+y+'" style="--cc:'+(y===YEARS[YEARS.length-1]?'var(--a)':'#4b78d6')+';background:'+(y===YEARS[YEARS.length-1]?'var(--a)':'#4b78d6')+'">'+(y===YEARS[YEARS.length-1]?'<span class="chip o s">ACTUAL</span>':'')+'<span class="ti">'+svgI('cal',40,1.6)+'</span><span class="by">'+y+'</span><span class="ts">'+ff(Y(y).tot)+'</span></button>').join('')+'<div class="tile ph"><span class="tt">+ '+(YEARS[YEARS.length-1]+1)+'</span><span class="ts">se agrega solo</span></div></div>';
    return h;
  },
- hist(){ return '<header class="hd"><div class="hdt hasseg hr">'+themeBtn()+ct('trend','Todo el histórico','p')+'<span class="rng">'+YEARS[0]+' a '+YEARS[YEARS.length-1]+'</span></div></header>'+hubGrid(HSEC,'hsec:',1); },
+ hist(){ return '<header class="hd"><div class="hdt hasseg hr">'+themeBtn()+ct('trend','Todo el histórico '+YEARS[0]+' a '+YEARS[YEARS.length-1],'p')+'</div></header>'+hubGrid(HSEC,'hsec:',1); },
  hsec(k){ const s=HSEC.find(x=>x[0]===k); const fn={resumen:hResumen,meses:hMeses,anios:hAnios,acum:hAcum,rubros:hRubros,empresas:hEmpresas}[k]; return head(s[1],s[3],s[4],'Histórico '+YEARS[0]+'–'+YEARS[YEARS.length-1])+edBtn(k==='resumen'?'hres':'')+(MBAR.h.includes(k)?modeBar():'')+fn()+chain(HSEC,k,'hsec:','hist','Volver a Histórico'); },
  year(y){ y=+y; return head('Año '+y,'cal','a')+hubGrid(YSEC,'ysec:'+y+':',1); },
  ysec(y,k){ y=+y; const s=YSEC.find(x=>x[0]===k); const fn={resumen:yResumen,meses:yMeses,donde:yDonde,como:yComo,records:yRecords,radio:yRadio}[k]; return head(s[1]+' · '+y,s[3],s[4])+edBtn({resumen:'yres',radio:'pulso',meses:'mes'}[k])+(MBAR.y.includes(k)?modeBar():'')+fn(y)+chain(YSEC,k,'ysec:'+y+':','year:'+y,'Volver a '+y); },
