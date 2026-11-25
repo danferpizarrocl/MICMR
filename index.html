@@ -1087,10 +1087,11 @@ function histAgg(){
   const ys=YEARS.map(Y), tot=sum(ys.map(d=>d.tot)), n=sum(ys.map(d=>d.n)), onV=sum(ys.map(d=>d.onV)), onN=sum(ys.map(d=>d.onN));
   return {ys,tot,n,onV,offV:tot-onV,onN,offN:n-onN,devs:sum(ys.map(d=>d.devs.length)),devV:sum(ys.map(d=>d.devV)),cuo:sum(ys.map(d=>d.cuotas.length)),cuoV:sum(ys.map(d=>d.cuotaV)),meses:monthsCount()};
 }
+function hCmpN(L){ const py=prevYear(L); if(py===null) return ''; const cp=curPos(), inprog=L===cp.y, last=lastMonthIdx(L), d=Y(L), pd=Y(py), pn=inprog?pd.mu.slice(0,last+1).reduce((u,v)=>u+v,0):pd.n, c=dl(d.n,pn); return c===null?'':'<br>'+delta(c,L+' vs '+py+(inprog?' (ene–'+MESS[last]+')':'')); }
 function hResumen(){
   const a=histAgg(), ys=a.ys, cp=curPos(), best=ys.reduce((b,d)=>d.tot>b.tot?d:b,ys[0]), LAST=YEARS[YEARS.length-1];
   let h=totTile('Total histórico '+YEARS[0]+'–'+LAST,ff(a.tot),nn(a.n)+' compras en '+YEARS.length+(YEARS.length===1?' año':' años'));
-  tilesBegin(); h+=''+mini('box','Total de compras','a',nn(a.n),'Promedio por compra '+ff(a.n?a.tot/a.n:0))+mini('star','Año de mayor gasto','o',best.y,ff(best.tot))+mini('cal','Promedio mensual','t',ff(a.tot/a.meses),'Meses con gasto: '+a.meses)+mini('shop','Online','a',pc(a.tot?a.onV/a.tot:0),ff(a.onV)+' · '+nn(a.onN)+' compras')+mini('shop','Tienda física','o',pc(a.tot?a.offV/a.tot:0),ff(a.offV)+' · '+nn(a.offN)+' compras');
+  tilesBegin(); h+=''+mini('box','Total de compras','a',nn(a.n),'Promedio por compra '+ff(a.n?a.tot/a.n:0)+hCmpN(LAST))+mini('star','Año de mayor gasto','o',best.y,ff(best.tot))+mini('cal','Promedio mensual','t',ff(a.tot/a.meses),'Meses con gasto: '+a.meses)+mini('shop','Online','a',pc(a.tot?a.onV/a.tot:0),ff(a.onV)+' · '+nn(a.onN)+' compras')+mini('shop','Tienda física','o',pc(a.tot?a.offV/a.tot:0),ff(a.offV)+' · '+nn(a.offN)+' compras');
   const all=[]; YEARS.forEach(y=>{ const d=Y(y), l=lastMonthIdx(y); for(let i=0;i<=l;i++) all.push({y,i,v:d.mt[i],n:d.mu[i]}); });
   const cl=all.filter(x=>x.v>0&&!(x.y===cp.y&&x.i===cp.m)), clo=all.filter(x=>x.v>0);
   if(cl.length){
