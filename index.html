@@ -547,6 +547,15 @@ body[data-r="cuotas"] .hd .ct .u{white-space:normal;overflow:visible;text-overfl
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .okb.fl:not(.err){border-color:#ff6b66!important}}
 :root[data-theme="dark"] .okb.fl:not(.err){border-color:#ff6b66!important}
 
+/* 1.18 K: tarjetas con color de su ícono (translúcido claro / sólido oscuro) */
+.card.cc:not(.mcard){background:color-mix(in srgb,var(--cc) 18%,transparent);border:1.5px solid color-mix(in srgb,var(--cc) 65%,transparent)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .card.cc:not(.mcard){background:color-mix(in srgb,var(--cc) 26%,var(--card));border-color:var(--cc)}}
+:root[data-theme="dark"] .card.cc:not(.mcard){background:color-mix(in srgb,var(--cc) 26%,var(--card));border-color:var(--cc)}
+/* 1.18 L: esferas del mapa de rubros */
+.bub>div>div{background:color-mix(in srgb,var(--bc) 32%,transparent);border:2px solid var(--bc);color:color-mix(in srgb,var(--bc) 55%,#000)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bub>div>div{background:var(--bc);border-color:var(--bc);color:#fff}}
+:root[data-theme="dark"] .bub>div>div{background:var(--bc);border-color:var(--bc);color:#fff}
+
 </style></head><body>
 <div id="splash"><div class="spc"><svg width="200" height="200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="0" fill="#2f6df0"/>
 <rect x="84" y="140" width="344" height="232" rx="34" fill="#fff"/>
@@ -824,7 +833,7 @@ const MC=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic
 const COL={s:'#5a6b86',k:'#d6409f',a:'var(--a)',p:'var(--p)',t:'var(--t)',o:'var(--o)',g:'var(--g)',r:'var(--r)'};
 function svgI(n,s,sw){ return '<svg width="'+(s||18)+'" height="'+(s||18)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="'+(sw||2)+'" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+IC[n]+'</svg>'; }
 function ct(icon,text,c,small){ return '<h3 class="ct'+(small?' sm':'')+'"><span class="ic" style="background:'+COL[c||'a']+'">'+svgI(icon,small?12:14,2.2)+'</span><span class="u" style="border-color:'+COL[c||'a']+'">'+esc(text)+'</span></h3>'; }
-function card(icon,title,c,body,cls){ return '<section class="card '+(cls||'')+'">'+ct(icon,title,c)+body+'</section>'; }
+function card(icon,title,c,body,cls){ return '<section class="card cc '+(cls||'')+'" style="--cc:'+COL[c||'a']+'">'+ct(icon,title,c)+body+'</section>'; }
 let TQ=null;
 const ICMAP={'Compras por semana':'grid','Promedio diario':'sun','Promedio por día':'sun','Promedio por compra':'scale','Comercio con más usos':'pin','Gasto online':'globe','Online':'globe','Gasto en tienda física':'store','Tienda física':'store','Año de mayor gasto':'trophy','Usos por día':'list','Año con menos compras':'gauge'};
 const ICSC={box:.92,bill:.92,trophy:.94,store:.94,globe:.94,star:1.06,tag:1.04,up:1.08,down:1.08,scale:.96,grid:1,sun:1};
@@ -1021,6 +1030,7 @@ function layMove(key,id,dir){
 }
 
 /* ===== MiCMR beta · secciones de análisis (paridad con el dashboard) ===== */
+const BUBC=['#e5484d','#f08a24','#e0b020','#30a46c','#12a594','#3e63dd','#8e4ec6','#d6409f','#0091ff','#7ca82b','#c2410c','#64748b'];
 const YSEC=[['resumen','Resumen','Totales, promedios y récords','card','a'],['meses','Meses','Gasto y usos por mes','cal','p'],['donde','Dónde','Comercios y rubros','pin','t'],['como','Cómo','Online, cuotas, devoluciones','swap','o'],['records','Récords','Caros, baratos, trimestres','star','g'],['radio','Pulso del año','Indicadores del año','gauge','r']];
 const HSEC=[['resumen','Resumen','Total y récords','card','p'],['meses','Meses y calor','Mapa de calor','cal','a'],['anios','Años','Año a año y promedios','bars','t'],['acum','Acumulado','Acumulado y tendencia','trend','o'],['rubros','Rubros','Distribución por rubro','tag','g'],['empresas','Empresas','Gasto y usos por empresa','shop','r']];
 const CSEC=[['resumen','Resumen','12 datos lado a lado','scale','t'],['meses','Meses','Gasto y usos por mes','cal','p'],['acum','Acumulado','Quién va más rápido','trend','a'],['prom','Promedio y trimestres','Ticket y T1 a T4','gauge','o'],['online','Online y meses','Online y mes a mes','shop','g'],['top','Top 5','Por gasto y por usos','star','r']];
@@ -1212,7 +1222,7 @@ function hRubros(){
   else { const top=groupBy(rows,c=>c.e).filter(z=>z.n>0).sort((a,b)=>b.n-a.n||b.v-a.v).slice(0,5);
     h+=card('star','Top 5 más usos históricos','o',(top.length>=3?podium(top.slice(0,3).map(z=>({k:z.k,v:z.n})),nn)+hbars(top.slice(3).map(z=>({label:z.k,v:z.n,sub:ff(z.v)})),{rank:true,fmt:nn,tier:true,start:3,nonote:1}):hbars(top.map(z=>({label:z.k,v:z.n,sub:ff(z.v)})),{rank:true,fmt:nn,tier:true}))); }
   const mxr=rub[0]?val(rub[0]):1;
-  h+=card('tag',g?'Mapa de rubros por tamaño del gasto':'Mapa de rubros por tamaño del uso','p','<div class="bub">'+rub.map((z,i)=>{ const dd=Math.round(40+90*Math.sqrt(val(z)/mxr)); return '<div style="width:'+Math.max(dd,70)+'px"><div style="width:'+dd+'px;height:'+dd+'px;background:'+(i<3?RK_UP[i]:CEL)+';font-size:'+(dd>80?13:10.5)+'px">'+pc(val(z)/tot)+'</div><span>'+esc(z.k)+'</span></div>'; }).join('')+'</div><div class="ms">Los tres rubros con más '+(g?'gasto':'usos')+' van en rojo, naranja y amarillo; el resto en celeste.</div>');
+  h+=card('tag',g?'Mapa de rubros por tamaño del gasto':'Mapa de rubros por tamaño del uso','p','<div class="bub">'+rub.map((z,i)=>{ const dd=Math.round(40+90*Math.sqrt(val(z)/mxr)); return '<div style="width:'+Math.max(dd,70)+'px"><div style="width:'+dd+'px;height:'+dd+'px;--bc:'+BUBC[i%BUBC.length]+';font-size:'+(dd>80?13:10.5)+'px">'+pc(val(z)/tot)+'</div><span>'+esc(z.k)+'</span></div>'; }).join('')+'</div><div class="ms">Cada rubro tiene su propio color para distinguirlo mejor.</div>');
   return h;
 }
 function hEmpresas(){
