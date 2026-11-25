@@ -398,8 +398,8 @@ details.exp>summary .etri svg{display:block}
 details.exp>summary,.eov{background:var(--exb);color:var(--exf);border:1px solid var(--exr);box-shadow:0 3px 10px rgba(0,0,0,.14);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 /* 0.47 volver fijo verde */
 :root{--bkb:rgba(27,154,107,.28);--bkf:#0b6a47;--bkr:rgba(27,154,107,.65)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bkb:#6fe0b0;--bkf:#07281c;--bkr:#6fe0b0}}
-:root[data-theme="dark"]{--bkb:#6fe0b0;--bkf:#07281c;--bkr:#6fe0b0}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bkb:rgba(16,110,76,.55);--bkf:#a8f3d2;--bkr:rgba(111,224,176,.6)}}
+:root[data-theme="dark"]{--bkb:rgba(16,110,76,.55);--bkf:#a8f3d2;--bkr:rgba(111,224,176,.6)}
 .bkf{background:var(--bkb);color:var(--bkf);border:1.5px solid var(--bkr);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 /* 0.48 volver fijo a la derecha */
 .bkf{left:auto;right:max(14px,env(safe-area-inset-right,0px))}
@@ -474,6 +474,15 @@ details.exp>summary,.eov{background:var(--exb);color:var(--exf);border:1px solid
 .okb.fl .oks+.oks{margin-top:2px}
 @keyframes okout2{to{opacity:0;visibility:hidden;transform:translate(-50%,-54%)}}
 .anr .big{flex:1 1 0;min-height:0}
+
+/* 1.4 Año: tarjetas que llenan la pantalla; Buscar: desplegable de años en el encabezado */
+.tg.fill{grid-template-rows:repeat(3,1fr);min-height:420px}
+.tg.fill .tile{min-height:0;gap:10px}
+.tg.fill .tile .tt{font-size:23px}
+.tg.fill .tile .ts{font-size:14.5px}
+.hdt.hasseg .mpw{flex:none;align-self:center}
+.hdt.hasseg .mpick.sm{padding:7px 11px;font-size:14px;border-radius:999px;gap:4px;white-space:nowrap}
+.hdt .mlist{left:auto;right:0}
 
 </style></head><body>
 <div id="splash"><div class="spc"><svg width="200" height="200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="0" fill="#2f6df0"/>
@@ -1310,7 +1319,7 @@ function fcarga(iso){ const t=new Date(iso); if(isNaN(t)) return '–'; const p=
 const MBAR={y:['meses','donde','records','como','radio'],h:['meses','anios','acum','rubros','empresas'],c:['acum','prom','online']};
 function empty(){ return '<div class="card emp"><div class="eic">'+svgI('up',34,1.8)+'</div><h2>Carga tu Excel para empezar</h2><p>MiCMR parte en blanco. Toca el botón, elige tu archivo de CMR y listo.</p><button class="btn" data-act="load">Cargar Excel</button><button class="btn ghost" data-go="resp">Importar un respaldo</button></div>'; }
 function nextBtn(label,go){ return '<button class="btn wide" data-go="'+go+'" data-replace="1">'+esc(label)+' '+svgI('chev',16,2.4)+'</button>'; }
-function hubGrid(list,pre){ return '<div class="tg">'+list.map(s=>'<button class="tile" data-go="'+pre+s[0]+'" style="--cc:'+COL[s[4]]+';background:'+COL[s[4]]+'"><span class="ti">'+svgI(s[3],44,1.6)+'</span><span class="tt">'+esc(s[1])+'</span><span class="ts">'+esc(s[2])+'</span></button>').join('')+'</div>'; }
+function hubGrid(list,pre,fill){ return '<div class="tg'+(fill?' fill':'')+'">'+list.map(s=>'<button class="tile" data-go="'+pre+s[0]+'" style="--cc:'+COL[s[4]]+';background:'+COL[s[4]]+'"><span class="ti">'+svgI(s[3],44,1.6)+'</span><span class="tt">'+esc(s[1])+'</span><span class="ts">'+esc(s[2])+'</span></button>').join('')+'</div>'; }
 function chain(list,key,pre,backGo,backLbl){ const i=list.findIndex(s=>s[0]===key); const nx=list[i+1]; return nx?'<div class="nx">'+nextBtn('Siguiente: '+nx[1],pre+nx[0])+'</div>':''; }
 
 const SCR={
@@ -1319,7 +1328,7 @@ const SCR={
    const cp=curPos(), y=YEARS[YEARS.length-1], d=Y(y), a=histAgg();
    const dk=themeEff()==='dark';
    let h='<div class="anl full"><button class="big xl" data-go="year:'+y+'" style="--cc:var(--a);background:var(--a)"><span class="wrapI"><span>'+svgI('cal',140,1.2)+'</span><span>'+svgI('bars',140,1.2)+'</span><span>'+svgI('card',140,1.2)+'</span></span><span class="chip o">AÑO ACTUAL</span><span class="by">'+y+'</span><span class="bs b2">'+ff(d.tot)+'</span><span class="bs s b3">'+nn(d.n)+' · '+(y===cp.y?MESL[cp.m]:'Año cerrado')+'</span></button>'+
-    '<div class="anr"><button class="big l" data-go="histyears" style="--cc:var(--p);background:var(--p)"><span class="tgl in p" role="button" tabindex="0" data-act="theme" aria-label="'+(dk?'Cambiar a tema claro':'Cambiar a tema oscuro')+'">'+svgI(dk?'sun':'moon',28,2)+'</span><span class="bic">'+svgI('trend',112,1.3)+'</span><span class="bt">Histórico</span><span class="bs s">'+YEARS[0]+'-'+YEARS[YEARS.length-1]+'</span></button>'+
+    '<div class="anr"><button class="big l" data-go="histyears" style="--cc:var(--p);background:var(--p)"><span class="tgl in p" role="button" tabindex="0" data-act="theme" aria-label="'+(dk?'Cambiar a tema claro':'Cambiar a tema oscuro')+'">'+svgI(dk?'sun':'moon',28,2)+'</span><span class="bic">'+svgI('trend',112,1.3)+'</span><span class="bt">Histórico</span></button>'+
     '<button class="big l" data-go="cmp" style="--cc:var(--t);background:var(--t)"><span class="bic">'+svgI('scale',112,1.3)+'</span><span class="bt">Comparar dos años</span><span class="bs s">Un año contra otro</span></button></div></div>';
    if(!OKT) OKT=Date.now()+(window.SPL||0);
    const okl=3000-(Date.now()-OKT);
@@ -1335,7 +1344,7 @@ const SCR={
  },
  hist(){ let h=head('Todo el histórico','trend','p',YEARS[0]+' a '+YEARS[YEARS.length-1]); return h+hubGrid(HSEC,'hsec:'); },
  hsec(k){ const s=HSEC.find(x=>x[0]===k); const fn={resumen:hResumen,meses:hMeses,anios:hAnios,acum:hAcum,rubros:hRubros,empresas:hEmpresas}[k]; return head(s[1],s[3],s[4],'Histórico '+YEARS[0]+'–'+YEARS[YEARS.length-1])+edBtn(k==='resumen'?'hres':'')+(MBAR.h.includes(k)?modeBar():'')+fn()+chain(HSEC,k,'hsec:','hist','Volver a Histórico'); },
- year(y){ y=+y; const d=Y(y); return head('Año '+y,'cal','a',ff(d.tot)+' · '+nn(d.n)+' compras')+hubGrid(YSEC,'ysec:'+y+':'); },
+ year(y){ y=+y; return head('Año '+y,'cal','a')+hubGrid(YSEC,'ysec:'+y+':',1); },
  ysec(y,k){ y=+y; const s=YSEC.find(x=>x[0]===k); const fn={resumen:yResumen,meses:yMeses,donde:yDonde,como:yComo,records:yRecords,radio:yRadio}[k]; return head(s[1]+' · '+y,s[3],s[4])+edBtn({resumen:'yres',radio:'pulso',meses:'mes'}[k])+(MBAR.y.includes(k)?modeBar():'')+fn(y)+chain(YSEC,k,'ysec:'+y+':','year:'+y,'Volver a '+y); },
  cuotas(y,tab){ if(y==='hist') return head('Devoluciones y cuotas','ret','o','Histórico '+YEARS[0]+'–'+YEARS[YEARS.length-1])+cuotasHist(tab); y=+y; return head('Devoluciones y cuotas','ret','o','Año '+y)+cuotasDetail(y,tab); },
  cmp(){
@@ -1349,9 +1358,10 @@ const SCR={
  cmpv(a,b){ return head(a+' vs '+b,'scale','t')+hubGrid(CSEC,'csec:'+a+':'+b+':')+'<button class="wideb" data-act="back"><span><b>Cambiar años</b><em>'+a+' vs '+b+'</em></span>'+svgI('scale',20,2)+'</button>'; },
  csec(a,b,k){ a=+a; b=+b; const s=CSEC.find(x=>x[0]===k); const fn={resumen:cResumen,meses:cMeses,acum:cAcum,prom:cProm,online:cOnline,top:cTop}[k]; return head(s[1],s[3],s[4],a+' vs '+b)+(MBAR.c.includes(k)?modeBar():'')+fn(a,b)+chain(CSEC,k,'csec:'+a+':'+b+':','cmpv:'+a+':'+b,'Volver a '+a+' vs '+b); },
  buscar(){
-   let h=head('Buscar compra','search','p','Por nombre, monto o año');
+   const mp=DATA?'<div class="mpw"><button class="mpick sm" data-act="mpick">'+(SEARCH.y==='all'?'Todos':SEARCH.y)+' '+svgI('chev',16,2.6)+'</button><div class="mlist" hidden><button data-act="sy:all" class="'+(SEARCH.y==='all'?'on':'')+'">Todos</button>'+YEARS.slice().reverse().map(y=>'<button data-act="sy:'+y+'" class="'+(SEARCH.y===String(y)?'on':'')+'">'+y+'</button>').join('')+'</div></div>':'';
+   let h='<header class="hd"><div class="hdt'+(mp?' hasseg':'')+'">'+themeBtn()+ct('search','Buscar compra','p')+mp+'</div><p class="sub">Por nombre, monto o año</p></header>';
    if(!DATA) return h+empty();
-   h+='<div class="sbox">'+svgI('search',26,2.2)+'<input id="q" class="inp" type="search" placeholder="Ej: Ebay, Unimarc, 279251" value="'+esc(SEARCH.q)+'" autocomplete="off"></div><div class="sflt"><div class="mpw"><button class="mpick" data-act="mpick">Año: '+(SEARCH.y==='all'?'Todos':SEARCH.y)+' '+svgI('chev',16,2.6)+'</button><div class="mlist" hidden><button data-act="sy:all" class="'+(SEARCH.y==='all'?'on':'')+'">Todos</button>'+YEARS.slice().reverse().map(y=>'<button data-act="sy:'+y+'" class="'+(SEARCH.y===String(y)?'on':'')+'">'+y+'</button>').join('')+'</div></div></div><div id="res"><div id="res">'+searchRes()+'</div>';
+   h+='<div class="sbox">'+svgI('search',26,2.2)+'<input id="q" class="inp" type="search" placeholder="Ej: Ebay, Unimarc, 279251" value="'+esc(SEARCH.q)+'" autocomplete="off"></div><div id="res"><div id="res">'+searchRes()+'</div>';
    return h;
  },
  mas(){
@@ -1458,7 +1468,7 @@ document.addEventListener('click',e=>{
   else if(a==='okx'){ OKT=1; const e=document.getElementById('okb'); if(e) e.remove(); }
   else if(a==='reset'){ STACK=[]; ROUTE='home'; render(); }
 });
-function fitHome(){ try{ const app=document.getElementById('app'), g=document.querySelector('.anl.full'), nv=document.querySelector('.nv');
+function fitHome(){ try{ const app=document.getElementById('app'), g=document.querySelector('.anl.full, .tg.fill'), nv=document.querySelector('.nv');
   if(!g||!nv){ if(app) app.style.paddingBottom=''; return; }
   app.style.paddingBottom='0px'; const top=g.getBoundingClientRect().top+(window.scrollY||0); const hh=nv.getBoundingClientRect().top-top-14; g.style.height=Math.max(420,Math.round(hh))+'px'; }catch(e){} }
 window.addEventListener&&window.addEventListener('resize',fitHome);
