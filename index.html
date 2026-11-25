@@ -496,6 +496,12 @@ details.exp>summary,.eov{background:var(--exb);color:var(--exf);border:1px solid
 .hdt.hr .ct{font-size:clamp(13px,4.35vw,20px)}
 @media (max-width:380px){.hdt.hr .ct{font-size:clamp(13px,4.35vw,20px)}}
 
+/* 1.9 porcentaje de variación legible sobre cualquier color de tarjeta (solo tarjetas pequeñas, no el total grande) */
+.cuo:not(.tot) .cs .dl{display:inline-block;padding:1px 8px;border-radius:999px;background:rgba(255,255,255,.88);line-height:1.5}
+:root[data-theme="dark"] .cuo:not(.tot) .cs .dl{background:rgba(255,255,255,.9)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cuo:not(.tot) .cs .dl{background:rgba(255,255,255,.9)}}
+.cuo:not(.tot) .cs .dl.up{color:#c0302d}.cuo:not(.tot) .cs .dl.dn{color:#0f7a52}
+
 </style></head><body>
 <div id="splash"><div class="spc"><svg width="200" height="200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="0" fill="#2f6df0"/>
 <rect x="84" y="140" width="344" height="232" rx="34" fill="#fff"/>
