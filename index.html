@@ -502,6 +502,13 @@ details.exp>summary,.eov{background:var(--exb);color:var(--exf);border:1px solid
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .cuo:not(.tot) .cs .dl{background:rgba(255,255,255,.9)}}
 .cuo:not(.tot) .cs .dl.up{color:#c0302d}.cuo:not(.tot) .cs .dl.dn{color:#0f7a52}
 
+/* 1.10 píldora de variación en todo (también en tarjetas de total): rojo si es mayor, verde si es menor */
+.dl{display:inline-block;padding:1px 8px;border-radius:999px;background:rgba(255,255,255,.9);line-height:1.5}
+.dl.up{color:#c0302d!important}.dl.dn{color:#0f7a52!important}
+.cuo.tot .cs .dl,.cuo.tot .cs .dl.up,.cuo.tot .cs .dl.dn{opacity:1}
+.cuo.tot .cs .dl.up{color:#c0302d!important}.cuo.tot .cs .dl.dn{color:#0f7a52!important}
+.cuo.tot .cs{white-space:normal;overflow:visible;text-overflow:clip;display:block}
+
 </style></head><body>
 <div id="splash"><div class="spc"><svg width="200" height="200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="0" fill="#2f6df0"/>
 <rect x="84" y="140" width="344" height="232" rx="34" fill="#fff"/>
@@ -1087,10 +1094,11 @@ function histAgg(){
   const ys=YEARS.map(Y), tot=sum(ys.map(d=>d.tot)), n=sum(ys.map(d=>d.n)), onV=sum(ys.map(d=>d.onV)), onN=sum(ys.map(d=>d.onN));
   return {ys,tot,n,onV,offV:tot-onV,onN,offN:n-onN,devs:sum(ys.map(d=>d.devs.length)),devV:sum(ys.map(d=>d.devV)),cuo:sum(ys.map(d=>d.cuotas.length)),cuoV:sum(ys.map(d=>d.cuotaV)),meses:monthsCount()};
 }
+function hCmpT(L){ const py=prevYear(L); if(py===null) return ''; const cp=curPos(), inprog=L===cp.y, last=lastMonthIdx(L), pv=inprog?cumTo(py,last):Y(py).tot, c=dl(Y(L).tot,pv); return c===null?'':'<br>'+delta(c,L+' vs '+py+(inprog?' (ene–'+MESS[last]+')':'')); }
 function hCmpN(L){ const py=prevYear(L); if(py===null) return ''; const cp=curPos(), inprog=L===cp.y, last=lastMonthIdx(L), d=Y(L), pd=Y(py), pn=inprog?pd.mu.slice(0,last+1).reduce((u,v)=>u+v,0):pd.n, c=dl(d.n,pn); return c===null?'':'<br>'+delta(c,L+' vs '+py+(inprog?' (ene–'+MESS[last]+')':'')); }
 function hResumen(){
   const a=histAgg(), ys=a.ys, cp=curPos(), best=ys.reduce((b,d)=>d.tot>b.tot?d:b,ys[0]), LAST=YEARS[YEARS.length-1];
-  let h=totTile('Total histórico '+YEARS[0]+'–'+LAST,ff(a.tot),nn(a.n)+' compras en '+YEARS.length+(YEARS.length===1?' año':' años'));
+  let h=totTile('Total histórico '+YEARS[0]+'–'+LAST,ff(a.tot),nn(a.n)+' compras en '+YEARS.length+(YEARS.length===1?' año':' años')+hCmpT(LAST));
   tilesBegin(); h+=''+mini('box','Total de compras','a',nn(a.n),'Promedio por compra '+ff(a.n?a.tot/a.n:0)+hCmpN(LAST))+mini('star','Año de mayor gasto','o',best.y,ff(best.tot))+mini('cal','Promedio mensual','t',ff(a.tot/a.meses),'Meses con gasto: '+a.meses)+mini('shop','Online','a',pc(a.tot?a.onV/a.tot:0),ff(a.onV)+' · '+nn(a.onN)+' compras')+mini('shop','Tienda física','o',pc(a.tot?a.offV/a.tot:0),ff(a.offV)+' · '+nn(a.offN)+' compras');
   const all=[]; YEARS.forEach(y=>{ const d=Y(y), l=lastMonthIdx(y); for(let i=0;i<=l;i++) all.push({y,i,v:d.mt[i],n:d.mu[i]}); });
   const cl=all.filter(x=>x.v>0&&!(x.y===cp.y&&x.i===cp.m)), clo=all.filter(x=>x.v>0);
