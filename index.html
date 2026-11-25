@@ -576,6 +576,16 @@ body[data-r="cuotas"] .hd .ct .u{white-space:normal;overflow:visible;text-overfl
 :root[data-theme="dark"] #res .lst>div.rw.on b,:root[data-theme="dark"] #res .lst>div.rw.on em{color:#cfe0ff}
 :root[data-theme="dark"] #res .lst>div.rw.off b,:root[data-theme="dark"] #res .lst>div.rw.off em{color:#ffe0b3}
 
+/* 1.20 filtro online / tienda en Buscar */
+#fx{display:flex;gap:8px;margin:10px 0 2px}
+#fx button{flex:1;display:flex;align-items:center;justify-content:center;padding:9px 6px;border-radius:999px;font:inherit;font-weight:800;font-size:13px;border:1.5px solid;color:var(--fg);background:transparent}
+#fx .t{border-color:color-mix(in srgb,var(--p) 60%,transparent);background:color-mix(in srgb,var(--p) 14%,transparent)}
+#fx .o{border-color:color-mix(in srgb,var(--a) 60%,transparent);background:color-mix(in srgb,var(--a) 10%,transparent);color:color-mix(in srgb,var(--a) 75%,#000)}
+#fx .f{border-color:color-mix(in srgb,var(--o) 60%,transparent);background:color-mix(in srgb,var(--o) 10%,transparent);color:color-mix(in srgb,var(--o) 62%,#000)}
+#fx .on.t{background:var(--p);color:#fff;border-color:var(--p)}#fx .on.o{background:var(--a);color:#fff;border-color:var(--a)}#fx .on.f{background:var(--o);color:#fff;border-color:var(--o)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #fx .o{color:#cfe0ff}:root:not([data-theme="light"]) #fx .f{color:#ffe0b3}:root:not([data-theme="light"]) #fx .on{color:#fff}}
+:root[data-theme="dark"] #fx .o{color:#cfe0ff}:root[data-theme="dark"] #fx .f{color:#ffe0b3}:root[data-theme="dark"] #fx .on{color:#fff}
+
 </style></head><body>
 <div id="splash"><div class="spc"><svg width="200" height="200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="0" fill="#2f6df0"/>
 <rect x="84" y="140" width="344" height="232" rx="34" fill="#fff"/>
@@ -724,7 +734,7 @@ const VER=(self.APP_VERSION||'1.0');
 const MESL=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const MESS=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 const K_DATA='micmr.data.v1', K_META='micmr.meta.v1';
-let DATA=null, META={meta:null}, ROUTE='home', STACK=[], CACHE={}, YEARS=[], SAVE_OK=true, SEARCH={q:'',y:'all'}, MSEL={}, SHEET_MSG='';
+let DATA=null, META={meta:null}, ROUTE='home', STACK=[], CACHE={}, YEARS=[], SAVE_OK=true, SEARCH={q:'',y:'all',t:'all'}, MSEL={}, SHEET_MSG='';
 
 const sum=a=>a.reduce((x,y)=>x+y,0);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1555,7 +1565,7 @@ const SCR={
    const mp=DATA?'<div class="mpw"><button class="mpick sm" data-act="mpick">'+(SEARCH.y==='all'?'Todos':SEARCH.y)+' '+svgI('chev',16,2.6)+'</button><div class="mlist" hidden><button data-act="sy:all" class="'+(SEARCH.y==='all'?'on':'')+'">Todos</button>'+YEARS.slice().reverse().map(y=>'<button data-act="sy:'+y+'" class="'+(SEARCH.y===String(y)?'on':'')+'">'+y+'</button>').join('')+'</div></div>':'';
    let h='<header class="hd"><div class="hdt'+(mp?' hasseg':'')+'">'+themeBtn()+ct('search','Buscar compra','p')+mp+'</div><p class="sub">Por nombre, monto o año</p></header>';
    if(!DATA) return h+empty();
-   h+='<div class="sbox">'+svgI('search',26,2.2)+'<input id="q" class="inp" type="search" placeholder="Ej: Ebay, Unimarc, 279251" value="'+esc(SEARCH.q)+'" autocomplete="off"></div><div id="res"><div id="res">'+searchRes()+'</div>';
+   h+='<div class="sbox">'+svgI('search',26,2.2)+'<input id="q" class="inp" type="search" placeholder="Ej: Ebay, Unimarc, 279251" value="'+esc(SEARCH.q)+'" autocomplete="off"></div><div id="fx">'+[['all','t','Todas'],['on','o','Online'],['off','f','Tienda física']].map(x=>'<button class="'+x[1]+(SEARCH.t===x[0]?' on':'')+'" data-act="st:'+x[0]+'">'+x[2]+'</button>').join('')+'</div><div id="res"><div id="res">'+searchRes()+'</div>';
    return h;
  },
  mas(){
@@ -1585,12 +1595,13 @@ function searchRes(){
   const q=norm(SEARCH.q.trim()), qn=q.replace(/[.$\s]/g,'');
   let rows=DATA.compras.filter(c=>!c.dev&&c.v!==0);
   if(SEARCH.y!=='all') rows=rows.filter(c=>String(c.y)===SEARCH.y);
+  if(SEARCH.t==='on') rows=rows.filter(c=>c.on); else if(SEARCH.t==='off') rows=rows.filter(c=>!c.on);
   if(q) rows=rows.filter(c=>norm(c.n).includes(q)||(/^\d+$/.test(qn)&&String(Math.abs(c.v)).includes(qn)));
   rows=rows.slice().sort((a,b)=>b.y-a.y||b.m-a.m||b.d-a.d||b.r-a.r);
   const tot=sum(rows.filter(c=>!c.dev).map(c=>c.v));
   const rowH=c=>'<div class="rw '+(c.on?'on':'off')+'"><span>'+esc(c.n)+'<em>'+fdate(c)+' '+c.y+' · '+(c.dev?'devolución':c.on?'online':'tienda')+(c.c?' · '+c.c+' cuotas':'')+'</em></span><b style="'+(c.dev?'color:var(--g)':'')+'">'+ff(c.v)+'</b></div>';
   const lim=!q&&rows.length>7;
-  let h='<div class="ms" style="margin:8px 0">'+(lim?'Últimas 7 de '+nn(rows.length)+' compras':nn(rows.length)+' resultados')+' · '+ff(tot)+'</div>';
+  let h='<div class="ms" style="margin:8px 0">'+(lim?'Últimas 7 de '+nn(rows.length)+' compras'+(SEARCH.t==='on'?' online':SEARCH.t==='off'?' en tienda':''):nn(rows.length)+' resultados'+(SEARCH.t==='on'?' online':SEARCH.t==='off'?' en tienda':''))+' · '+ff(tot)+'</div>';
   if(lim) return h+'<div class="lst">'+rows.slice(0,7).map(rowH).join('')+'</div>'+expand('Ver las '+nn(rows.length-7)+' restantes','Ocultar','<div class="lst">'+rows.slice(7).map(rowH).join('')+'</div>');
   h+='<div class="lst">'+rows.map(rowH).join('')+'</div>';
   return h+'</div>';
@@ -1657,6 +1668,7 @@ document.addEventListener('click',e=>{
   else if(a==='mpick'){ const l=el.closest('.mpw').querySelector('.mlist'); if(l){ l.hidden=!l.hidden; el.classList.toggle('open',!l.hidden); } }
   else if(a==='msel'){ const yy=+p[0], mm=+p[1]; MSEL['y'+yy]=mm; const bx=$('mb'); if(bx){ bx.innerHTML=monthBlock(yy,mm,true); fitNotes(); } else render(); }
   else if(a==='cpick'){ MSEL[p[0]]=+p[1]; render(); }
+  else if(a==='st'){ SEARCH.t=p[0]; document.querySelectorAll('#fx button').forEach(b=>b.classList.toggle('on',b.getAttribute('data-act')==='st:'+SEARCH.t)); const r=$('res'); if(r) r.innerHTML=searchRes(); }
   else if(a==='sy'){ SEARCH.y=p[0]; render(); const q=$('q'); if(q) q.focus(); }
   else if(a==='theme'){ const y=window.scrollY||0; themeToggle(); render(); window.scrollTo&&window.scrollTo(0,y); stuckUpd(); }
   else if(a==='okx'){ OKT=1; const e=document.getElementById('okb'); if(e) e.remove(); }
