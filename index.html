@@ -509,6 +509,21 @@ details.exp>summary,.eov{background:var(--exb);color:var(--exf);border:1px solid
 .cuo.tot .cs .dl.up{color:#c0302d!important}.cuo.tot .cs .dl.dn{color:#0f7a52!important}
 .cuo.tot .cs{white-space:normal;overflow:visible;text-overflow:clip;display:block}
 
+/* 1.11 B: título de Devoluciones y cuotas sin cortarse */
+body[data-r="cuotas"] .hd .ct{font-size:clamp(14px,4.1vw,20px);line-height:1.15}
+body[data-r="cuotas"] .hd .ct .u{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:break-word;min-width:0}
+/* 1.11 D: Comparar con desplegables */
+.cpr{display:flex;gap:12px;align-items:flex-start}.cpd{flex:1;min-width:0}.cpd .sec{margin:6px 0 8px}
+.mpick.cb{width:100%;justify-content:center;font-size:24px;padding:14px 10px;border-radius:16px}
+.cpd .mlist{left:0;right:auto;width:100%;min-width:130px}
+/* 1.11 F: Ranking de meses en filas grandes */
+.rkrs{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+.rkr{display:flex;gap:12px;align-items:center}
+.rkn{flex:none;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px}
+.rkb{flex:1;min-width:0}.rkt{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.rkt b{font-size:19px;font-weight:700}.rkr.on .rkt b{color:var(--al)}.rkt span{font-size:19px;font-weight:800;white-space:nowrap}
+.rkl{height:9px;border-radius:6px;background:var(--bd);margin-top:5px;overflow:hidden}.rkl i{display:block;height:100%;border-radius:6px}
+
 </style></head><body>
 <div id="splash"><div class="spc"><svg width="200" height="200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="0" fill="#2f6df0"/>
 <rect x="84" y="140" width="344" height="232" rx="34" fill="#fff"/>
@@ -1239,9 +1254,10 @@ function monthBlock(y,m,withMeta){
   row('Frente al promedio mensual del año',avg);
   if(rk) cmpR.push(['Lugar por '+(g?'gasto':'usos')+' en el año','<span style="'+(rk<=3?'color:'+RKT[rk-1]+';font-weight:800':'')+'">'+rk+' de '+opts.length+'</span>'+(g?' (1 es el más caro)':' (1 es el de más usos)')]);
   const ord=opts.slice().sort((a,b)=>arr[b]-arr[a]||a-b), mxv=Math.max(1,...ord.map(i=>arr[i]));
-  const cols=ord.map((i,j)=>{ const on=i===m, hh=Math.max(4,Math.round(arr[i]/mxv*90));
-    return '<div title="'+(j+1)+'° · '+MESL[i]+': '+fv(arr[i])+'"><span class="rv'+(on?' on':'')+'">'+(g?cpk(arr[i]):arr[i])+'</span><i style="height:'+hh+'px;background:'+(on?'var(--a)':'var(--b)')+';opacity:'+(on?1:.7)+'"></i><b class="'+(on?'on':'')+'">'+(j+1)+'°</b><em class="'+(on?'on':'')+'">'+MESS[i]+'</em></div>'; }).join('');
-  h+=card('gauge','Comparaciones · '+(g?'gasto':'usos'),'a',modeSw()+rowsKV(cmpR)+'<div class="ms" style="margin-top:4px">Ranking de meses por '+(g?'gasto':'usos')+' (de mayor a menor)</div><div class="rk">'+cols+'</div>'+(inprog?'<div class="ms">'+MESL[m]+' sigue en curso, así que aún suma menos que los meses cerrados.</div>':''));
+  const cpn=curPos(), RC=['#f2c230','#aab3c0','#cd8b52'];
+  const cols=ord.map((i,j)=>{ const on=i===m, col=on?'var(--a)':(j<3?RC[j]:'var(--b)'), w=Math.max(3,Math.round(arr[i]/mxv*100));
+    return '<div class="rkr'+(on?' on':'')+'"><span class="rkn" style="background:'+col+'">'+(j+1)+'°</span><div class="rkb"><div class="rkt"><b>'+MESL[i]+(y===cpn.y&&i===cpn.m?' <i class="ci">en curso</i>':'')+'</b><span>'+fv(arr[i])+'</span></div><div class="rkl"><i style="width:'+w+'%;background:'+col+'"></i></div></div></div>'; }).join('');
+  h+=card('gauge','Comparaciones · '+(g?'gasto':'usos'),'a',modeSw()+rowsKV(cmpR)+'<div class="ms" style="margin-top:4px">Ranking de meses por '+(g?'gasto':'usos')+' (de mayor a menor)</div><div class="rkrs">'+cols+'</div>'+(inprog?'<div class="ms">'+MESL[m]+' sigue en curso, así que aún suma menos que los meses cerrados.</div>':''));
   // otros años
   const firstK=YEARS.find(k=>!(k===cp.y&&m>lastMonthIdx(k))&&(Y(k).mu[m]>0||Y(k).mt[m]>0)); const hy=YEARS.filter(k=>!(k===cp.y&&m>lastMonthIdx(k))&&(firstK===undefined||k>=firstK)).slice().reverse();
   h+=card('cal',MESL[m]+' en otros años · '+(g?'gasto':'usos'),'p','<div class="lst">'+hy.map(k=>{ const A=g?Y(k).mt:Y(k).mu, v=A[m], pv=YEARS.includes(k-1)?(g?Y(k-1).mt:Y(k-1).mu)[m]:0;
@@ -1378,8 +1394,8 @@ const SCR={
  cmp(){
    let h=head('Comparar','scale','t','Elige los dos años');
    const A=MSEL.cA||YEARS[YEARS.length-1], B=MSEL.cB||(YEARS.length>1?YEARS[YEARS.length-2]:YEARS[0]);
-   const row=(lbl,key,sel,dis,c)=>'<h3 class="sec" style="color:'+c+'">'+lbl+'</h3><div class="tg y3">'+YEARS.slice().reverse().map(y=>'<button class="tile ys '+(y===sel?'on':'')+'" '+(y===dis?'disabled':'')+' data-act="cpick:'+key+':'+y+'" style="'+(y===sel?'background:'+c+';color:#fff;border-color:'+c:'')+'">'+y+'</button>').join('')+'</div>';
-   h+=row('Año A','cA',A,B,'var(--a)')+row('Año B','cB',B,A,'var(--b)');
+   const dd=(lbl,key,sel,dis,c)=>'<div class="cpd"><h3 class="sec" style="color:'+c+'">'+lbl+'</h3><div class="mpw"><button class="mpick cb" data-act="mpick" style="background:'+c+'">'+sel+' '+svgI('chev',18,2.6)+'</button><div class="mlist" hidden>'+YEARS.slice().reverse().map(y=>'<button data-act="cpick:'+key+':'+y+'" class="'+(y===sel?'on':'')+'" '+(y===dis?'disabled':'')+'>'+y+'</button>').join('')+'</div></div></div>';
+   h+='<div class="cpr">'+dd('Año A','cA',A,B,'var(--a)')+dd('Año B','cB',B,A,'var(--b)')+'</div>';
    if(A!==B) h+='<div class="pick">'+A+'  vs  '+B+'</div><button class="btn wide" data-go="cmpv:'+A+':'+B+'">Comparar '+svgI('chev',16,2.4)+'</button>'; else h+='<div class="ms">Elige dos años distintos</div>';
    return h;
  },
@@ -1407,7 +1423,7 @@ const SCR={
    const cap=layCapture(), L=cap[s[0]]||[];
    let h=head(s[1],s[2],s[3],'Usa las flechas para mover cada bloque');
    h+=card('list','Orden de los bloques',s[3],'<div class="ord">'+L.map((b,i)=>'<div class="orw"><span class="on">'+(i+1)+'</span><span class="ol">'+esc(b.label)+'</span><button class="ob" aria-label="Subir" '+(i?'data-act="mv:'+s[0]+':'+b.id+':u"':'disabled')+'>'+svgI('up',18,2.4)+'</button><button class="ob" aria-label="Bajar" '+(i<L.length-1?'data-act="mv:'+s[0]+':'+b.id+':d"':'disabled')+'>'+svgI('down',18,2.4)+'</button></div>').join('')+'</div>'+(s[0]==='mes'?'<p class="ms">La tarjeta del mes con su selector siempre queda primero.</p>':''));
-   h+='<button class="btn ghost wide" data-act="lyreset:'+s[0]+'"'+(LAY[s[0]]?'':' disabled')+'>Volver al orden original</button><button class="btn ghost wide" data-act="back">Volver</button>';
+   h+='<button class="btn ghost wide" data-act="lyreset:'+s[0]+'"'+(LAY[s[0]]?'':' disabled')+'>Volver al orden original</button>';
    return h;
  },
  resp(){
@@ -1434,7 +1450,7 @@ function render(){
   if(EDIT&&EDITR!==ROUTE) EDIT=null;
   const [k,...p]=ROUTE.split(':'); let html;
   try{ html=SCR[k].apply(null,p); }catch(e){ html='<div class="card"><h3>Algo falló al mostrar esto</h3><p class="ms">'+esc(e.message)+'</p><button class="btn" data-act="reset">Ir al Inicio</button></div>'; }
-  $('app').innerHTML=html+((STACK.length&&ROUTE.split(':')[0]!=='home')?'<button class="bkf" data-act="back" aria-label="Volver">'+svgI('chev',16,2.6)+' Volver</button>':'');
+  document.body.setAttribute('data-r',ROUTE.split(':')[0]); $('app').innerHTML=html+((STACK.length&&ROUTE.split(':')[0]!=='home')?'<button class="bkf" data-act="back" aria-label="Volver">'+svgI('chev',16,2.6)+' Volver</button>':'');
   const t=tabOf(ROUTE); document.querySelectorAll('.nv button').forEach((b,i)=>b.classList.toggle('on',i===t));
   window.scrollTo&&window.scrollTo(0,0); fitNotes();
   try{ const mw=document.querySelector('.mswrap'), ht=document.querySelector('.hdt'); if(mw&&ht){ const sg=mw.querySelector('.seg'); if(sg){ ht.classList.add('hasseg'); ht.appendChild(sg); } mw.remove(); } }catch(e){}
