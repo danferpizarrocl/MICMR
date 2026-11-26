@@ -594,9 +594,12 @@ body[data-r="cuotas"] .hd .ct .u{white-space:normal;overflow:visible;text-overfl
 /* 1.22 N: tarjetas Total histórico / Total de compras sin cápsula, cifra grande y texto abajo */
 .cuo.prj.hx{container-type:inline-size;min-height:158px;align-items:stretch}
 .cuo.prj.hx>.pt{display:flex;flex-direction:column;align-self:stretch;min-width:0}
-.cuo.prj.hx>.pt>b{font-size:min(64px,calc((100cqw - 112px)/(var(--ch,6)*.575)));line-height:1.05;margin:6px 0 0}
+.cuo.prj.hx>.pt>b{line-height:1.05;margin:6px 0 0}
+.cuo.prj.hx>.pt>b,.cuo.prj.hs>.pt>b{font-size:min(64px,calc((100cqw - 66px)/(11*.56)))}
+.cuo.prj.hs{container-type:inline-size}
 .cuo.prj.hx>.pt>.cs{margin-top:auto;padding-top:8px}
-.cuo.prj.hx>svg{width:48px;height:48px;align-self:center;flex:none}
+.cuo.prj.hx>svg,.cuo.prj.hs>svg{width:48px;height:48px;flex:none}
+.cuo.prj.hx>svg{align-self:center}
 /* 1.22 O: botón Menú junto a Volver */
 .bkf.bkm{right:calc(max(14px,env(safe-area-inset-right,0px)) + 104px)}
 .bkm svg{transform:none!important}
@@ -896,7 +899,7 @@ const ICMAP={'Compras por semana':'grid','Promedio diario':'sun','Promedio por d
 const ICSC={box:.92,bill:.92,trophy:.94,store:.94,globe:.94,star:1.06,tag:1.04,up:1.08,down:1.08,scale:.96,grid:1,sun:1};
 function miniB(icon,title,c,main,sub,tag,attr,full,lbl,xc){ const mv=String(main), prj=full===2||/^(Proyecci|Total de usos)/.test(title), fs=mv.length<=7?28:mv.length<=9?24:mv.length<=11?20:17;
   if(/^Proyecci/.test(title)) icon=/usos/.test(title)?'target':'trend'; else if(ICMAP[title]) icon=ICMAP[title];
-  if(prj) return '<'+tag+' class="cuo mn full prj'+(xc?' hx':'')+'"'+attr+' style="--cc:'+COL[c||'a']+(xc?';--ch:'+mv.length:'')+'"><div class="pt"><span class="cl">'+esc(lbl||title)+'</span><b>'+mv+'</b>'+(sub?'<span class="cs">'+sub+'</span>':'')+'</div>'+svgI(icon,66,1.6)+'</'+tag+'>';
+  if(prj) return '<'+tag+' class="cuo mn full prj'+(xc===2?' hs':xc?' hx':'')+'"'+attr+' style="--cc:'+COL[c||'a']+'"><div class="pt"><span class="cl">'+esc(lbl||title)+'</span><b>'+mv+'</b>'+(sub?'<span class="cs">'+sub+'</span>':'')+'</div>'+svgI(icon,66,1.6)+'</'+tag+'>';
   return '<'+tag+' class="cuo mn'+(full?' full':'')+'"'+attr+' style="--cc:'+COL[c||'a']+'">'+svgI(icon,Math.round(36*(ICSC[icon]||1)),1.7)+'<span class="cl">'+esc(title)+'</span><b style="font-size:'+fs+'px">'+mv+'</b>'+(sub?'<span class="cs">'+sub+'</span>':'')+'</'+tag+'>'; }
 function mini(icon,title,c,main,sub,lbl,xc){ if(TQ){ TQ[title]=(cc,full)=>miniB(icon,title,cc||c,main,sub,'div','',full,lbl,xc); return ''; } return miniB(icon,title,c,main,sub,'div','',undefined,lbl,xc); }
 function totTile(title,main,sub,xc){ return '<div class="cuo prj tot'+(xc?' hx':'')+'" style="--cc:'+COL.k+(xc?';--ch:'+String(main).length:'')+'"><div class="pt"><span class="cl">'+title+'</span><b>'+main+'</b>'+(sub?'<span class="cs">'+sub+'</span>':'')+'</div>'+svgI('bill',66,1.5)+'</div>'; }
@@ -1219,7 +1222,7 @@ function hCmpN(L){ const py=prevYear(L); if(py===null) return ''; const cp=curPo
 function hResumen(){
   const a=histAgg(), ys=a.ys, cp=curPos(), best=ys.reduce((b,d)=>d.tot>b.tot?d:b,ys[0]), LAST=YEARS[YEARS.length-1];
   let h=totTile('Total histórico '+YEARS[0]+'–'+LAST,ff(a.tot),nn(a.n)+' compras en '+YEARS.length+(YEARS.length===1?' año':' años'),1);
-  tilesBegin(); h+=''+mini('box','Total de compras','a',nn(a.n),'Promedio por compra '+ff(a.n?a.tot/a.n:0),'Total de compras entre el '+YEARS[0]+' y '+LAST,1)+mini('star','Año de mayor gasto','o',best.y,ff(best.tot))+mini('cal','Promedio mensual','t',ff(a.tot/a.meses),'Meses con gasto: '+a.meses)+mini('shop','Online','a',pc(a.tot?a.onV/a.tot:0),ff(a.onV)+' · '+nn(a.onN)+' compras')+mini('shop','Tienda física','o',pc(a.tot?a.offV/a.tot:0),ff(a.offV)+' · '+nn(a.offN)+' compras');
+  tilesBegin(); h+=''+mini('box','Total de compras','a',nn(a.n),'Promedio por compra '+ff(a.n?a.tot/a.n:0),'Total de compras entre el '+YEARS[0]+' y '+LAST,1)+mini('star','Año de mayor gasto','o',best.y,ff(best.tot))+mini('cal','Promedio mensual','t',ff(a.tot/a.meses),'Meses con gasto: '+a.meses,'',2)+mini('shop','Online','a',pc(a.tot?a.onV/a.tot:0),ff(a.onV)+' · '+nn(a.onN)+' compras')+mini('shop','Tienda física','o',pc(a.tot?a.offV/a.tot:0),ff(a.offV)+' · '+nn(a.offN)+' compras');
   const all=[]; YEARS.forEach(y=>{ const d=Y(y), l=lastMonthIdx(y); for(let i=0;i<=l;i++) all.push({y,i,v:d.mt[i],n:d.mu[i]}); });
   const cl=all.filter(x=>x.v>0&&!(x.y===cp.y&&x.i===cp.m)), clo=all.filter(x=>x.v>0);
   if(cl.length){
