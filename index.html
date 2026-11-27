@@ -693,7 +693,7 @@ async function readWorkbook(buf){
     const nm=/\bname="([^"]*)"/.exec(m[1]); const rid=/\br:id="([^"]+)"/.exec(m[1]); if(!nm||!rid) continue;
     const name=unent(nm[1]); let tg=relMap[rid[1]]; if(!tg) continue;
     tg=tg.replace(/^\//,''); if(!tg.startsWith('xl/')) tg='xl/'+tg;
-    if(!/^CMR \d{4}/.test(name) && !/Hist[óo]rico/.test(name)) continue;
+    if(!/^CMR \d{4}/.test(name) && !/Hist[óo]rico/.test(name) && !/BASE DATOS/i.test(name)) continue;
     const x=await read(tg); if(x) sheets[name]=parseSheet(x,sst);
   }
   return sheets;
@@ -747,7 +747,10 @@ function buildData(sheets){
       }
     }
   }
-  return {compras,years,fecha:fechaTxt,rubros:rub,cargado:new Date().toISOString()};
+  /* lista de empresas desde la hoja BASE DATOS (columnas V empresa, W costo, X usos) */
+  const base=[]; const bn=Object.keys(sheets).find(n=>/BASE DATOS/i.test(n));
+  if(bn){ const rows=sheets[bn]; Object.keys(rows).map(Number).sort((a,b)=>a-b).forEach(k=>{ if(k<3) return; const r=rows[k]; if(typeof r.V!=='string') return; const nm=r.V.replace(/\s+/g,' ').trim(); if(!nm) return; base.push({k:nm,v:typeof r.W==='number'?Math.round(r.W):0,n:typeof r.X==='number'?Math.round(r.X):0}); }); }
+  return {compras,years,fecha:fechaTxt,rubros:rub,base,cargado:new Date().toISOString()};
 }
 if(typeof module!=='undefined') module.exports={readWorkbook,buildData,normEmp};
 
@@ -830,7 +833,13 @@ function cumSeries(y){ const d=Y(y), last=lastMonthIdx(y); const out=[]; let s=0
 function rubroOf(c){ return rubroName(DATA.rubros[c.e.toLowerCase()]); }
 function groupBy(rows,keyf){ const m={}; rows.forEach(c=>{ const k=keyf(c); const kk=k.toLowerCase(); const o=m[kk]||(m[kk]={k,v:0,n:0}); o.v+=c.v; o.n++; }); return Object.values(m); }
 const COLEC=['amiibo'];
-function groupEmp(rows){ const g=groupBy(rows,c=>c.e); COLEC.forEach(w=>{ const m=rows.filter(c=>String(c.n).toLowerCase().includes(w)); if(!m.length) return; const o={k:w.charAt(0).toUpperCase()+w.slice(1),v:sum(m.map(c=>c.v)),n:m.length}; const i=g.findIndex(z=>z.k.toLowerCase()===w); if(i>=0){ o.k=g[i].k; g[i]=o; } else g.push(o); }); return g; }
+function empBase(){ return (DATA&&Array.isArray(DATA.base)&&DATA.base.length)?DATA.base:null; }
+/* Ranking por empresa: usa la lista de la hoja BASE DATOS (hist=1 → costo y usos tal cual la hoja; si no, regla "contiene" como el SUMIF del Excel) */
+function groupEmp(rows,hist){ const B=empBase();
+  if(B) return B.map(b=>{ if(hist) return {k:b.k,v:b.v,n:b.n}; const w=b.k.toLowerCase(), m=rows.filter(c=>String(c.n).toLowerCase().includes(w)); return {k:b.k,v:sum(m.map(c=>c.v)),n:m.length}; });
+  const g=groupBy(rows,c=>c.e); COLEC.forEach(w=>{ const m=rows.filter(c=>String(c.n).toLowerCase().includes(w)); if(!m.length) return; const o={k:w.charAt(0).toUpperCase()+w.slice(1),v:sum(m.map(c=>c.v)),n:m.length}; const i=g.findIndex(z=>z.k.toLowerCase()===w); if(i>=0){ o.k=g[i].k; g[i]=o; } else g.push(o); }); return g; }
+function sinEmpNota(rows){ const B=empBase(); if(!B) return ''; const ws=B.map(b=>b.k.toLowerCase()), m=rows.filter(c=>{ const s=String(c.n).toLowerCase(); return !ws.some(w=>s.includes(w)); });
+  return '<div class="ms" style="margin-top:6px">Compras sin empresa de la lista: '+nn(m.length)+' usos · '+ff(sum(m.map(c=>c.v)))+' gastados. No aparecen en este ranking.</div>'; }
 function allRows(){ return DATA.compras.filter(c=>!c.dev); }
 function prevYear(y){ const i=YEARS.indexOf(y); return i>0?YEARS[i-1]:null; }
 function seasonAvg(){ // promedio por mes de años cerrados (sin el primero, parcial, ni el actual)
@@ -1160,7 +1169,7 @@ function yDonde(y){
   const rub=groupBy(d.rows,c=>rubroOf(c)).filter(z=>z.k!=='Otros'&&(g?z.v:z.n)>0).sort((a,b)=>g?b.v-a.v:(b.n-a.n||b.v-a.v)), den=sum(rub.map(val));
   h+=card('tag',g?'Gasto por rubro':'Usos por rubro','g',hbars(rub.map(z=>({label:z.k,v:val(z),sub:pc(den?val(z)/den:0)})),{fmt:fv,tier:true,limit:3})+'<div class="ms">Los tres primeros van en rojo, naranja y amarillo. Los rubros salen de la hoja Análisis Histórico de tu Excel; las compras sin rubro no se muestran aquí y los porcentajes son sobre los rubros mostrados.</div>');
   const L=groupEmp(d.rows).filter(z=>val(z)>0).sort((a,b)=>g?b.v-a.v:(b.n-a.n||b.v-a.v));
-  h+=card('pin','Dónde se usó el dinero','t',hbars(L.map(z=>({label:z.k,v:val(z)})),{fmt:fv,tier:true,limit:3})+'<div class="ms">'+L.length+(L.length===1?' empresa':' empresas')+' en '+y+', ordenadas por '+(g?'gasto':'usos')+'. Las tres primeras van en rojo, naranja y amarillo.</div>');
+  h+=card('pin','Dónde se usó el dinero','t',hbars(L.map(z=>({label:z.k,v:val(z)})),{fmt:fv,tier:true,limit:3})+'<div class="ms">'+L.length+(L.length===1?' empresa':' empresas')+' en '+y+', ordenadas por '+(g?'gasto':'usos')+'. Las tres primeras van en rojo, naranja y amarillo.</div>'+sinEmpNota(d.rows));
   return h;
 }
 function ovfCard(onV,offV,onN,offN,title,ic,c){
@@ -1281,15 +1290,15 @@ function hRubros(){
   let h=card('tag',g?'Distribución del gasto por rubro':'Distribución de usos por rubro','g',hbars(rub.map(z=>({label:z.k,v:val(z),sub:g?pc(z.v/tot):pc(z.n/tot)})),{fmt:fv,tier:true,limit:3}));
   if(g){ const top=rows.filter(c=>c.v>0).sort((a,b)=>b.v-a.v).slice(0,5);
     h+=card('star','Top 5 mayores gastos históricos','o',(top.length>=3?podium(top.slice(0,3).map(c=>({k:c.n,v:c.v})),ff)+hbars(top.slice(3).map(c=>({label:c.n,v:c.v,sub:c.y})),{rank:true,fmt:ff,tier:true,start:3,nonote:1}):hbars(top.map(c=>({label:c.n,v:c.v,sub:c.y})),{rank:true,fmt:ff,tier:true}))); }
-  else { const top=groupEmp(rows).filter(z=>z.n>0).sort((a,b)=>b.n-a.n||b.v-a.v).slice(0,5);
+  else { const top=groupEmp(rows,1).filter(z=>z.n>0).sort((a,b)=>b.n-a.n||b.v-a.v).slice(0,5);
     h+=card('star','Top 5 más usos históricos','o',(top.length>=3?podium(top.slice(0,3).map(z=>({k:z.k,v:z.n})),nn)+hbars(top.slice(3).map(z=>({label:z.k,v:z.n,sub:ff(z.v)})),{rank:true,fmt:nn,tier:true,start:3,nonote:1}):hbars(top.map(z=>({label:z.k,v:z.n,sub:ff(z.v)})),{rank:true,fmt:nn,tier:true}))); }
   const mxr=rub[0]?val(rub[0]):1;
   h+=card('tag',g?'Mapa de rubros por tamaño del gasto':'Mapa de rubros por tamaño del uso','p','<div class="bub">'+rub.map((z,i)=>{ const dd=Math.round(40+90*Math.sqrt(val(z)/mxr)); return '<div style="width:'+Math.max(dd,70)+'px"><div style="width:'+dd+'px;height:'+dd+'px;--bc:'+BUBC[i%BUBC.length]+';font-size:'+(dd>80?13:10.5)+'px">'+pc(val(z)/tot)+'</div><span>'+esc(z.k)+'</span></div>'; }).join('')+'</div><div class="ms">Cada rubro tiene su propio color para distinguirlo mejor.</div>');
   return h;
 }
 function hEmpresas(){
-  const g=MODE===0, rows=allRows(), L=groupEmp(rows).filter(z=>g?z.v>0:z.n>0).sort((a,b)=>g?b.v-a.v:(b.n-a.n||b.v-a.v));
-  return card('shop',g?'Gasto por empresa':'Usos por empresa','r',modeSw()+hbars(L.map(z=>({label:z.k,v:g?z.v:z.n})),{fmt:g?ff:nn,limit:10,tier:true})+'<div class="ms">'+L.length+' empresas desde '+YEARS[0]+'. Las tres primeras van en rojo, naranja y amarillo.</div>');
+  const g=MODE===0, rows=allRows(), L=groupEmp(rows,1).filter(z=>g?z.v>0:z.n>0).sort((a,b)=>g?b.v-a.v:(b.n-a.n||b.v-a.v));
+  return card('shop',g?'Gasto por empresa':'Usos por empresa','r',modeSw()+hbars(L.map(z=>({label:z.k,v:g?z.v:z.n})),{fmt:g?ff:nn,limit:10,tier:true})+'<div class="ms">'+L.length+' empresas desde '+YEARS[0]+'. Las tres primeras van en rojo, naranja y amarillo.</div>'+sinEmpNota(rows));
 }
 /* ---------- COMPARAR ---------- */
 function cResumen(a,b){
