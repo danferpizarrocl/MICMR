@@ -852,14 +852,15 @@ function groupBy(rows,keyf){ const m={}; rows.forEach(c=>{ const k=keyf(c); cons
 const COLEC=['amiibo'];
 function empBase(){ return (DATA&&Array.isArray(DATA.base)&&DATA.base.length)?DATA.base:null; }
 /* Ranking por empresa: usa la lista de la hoja BASE DATOS (hist=1 → costo y usos tal cual la hoja; si no, regla "contiene" como el SUMIF del Excel) */
+function hasEmp(n,w){ const s=String(n).toLowerCase(); let i=s.indexOf(w); while(i>=0){ const nx=s.charAt(i+w.length); if(!nx||!/[a-záéíóúüñ]/i.test(nx)) return true; i=s.indexOf(w,i+1); } return false; }
 function groupEmp(rows,hist){ const B=empBase();
-  if(B) return B.map(b=>{ if(hist) return {k:b.k,v:b.v,n:b.n}; const w=b.k.toLowerCase(), m=rows.filter(c=>String(c.n).toLowerCase().includes(w)); return {k:b.k,v:sum(m.map(c=>c.v)),n:m.length}; });
+  if(B) return B.map(b=>{ if(hist) return {k:b.k,v:b.v,n:b.n}; const w=b.k.toLowerCase(), m=rows.filter(c=>hasEmp(c.n,w)); return {k:b.k,v:sum(m.map(c=>c.v)),n:m.length}; });
   const g=groupBy(rows,c=>c.e); COLEC.forEach(w=>{ const m=rows.filter(c=>String(c.n).toLowerCase().includes(w)); if(!m.length) return; const o={k:w.charAt(0).toUpperCase()+w.slice(1),v:sum(m.map(c=>c.v)),n:m.length}; const i=g.findIndex(z=>z.k.toLowerCase()===w); if(i>=0){ o.k=g[i].k; g[i]=o; } else g.push(o); }); return g; }
 function rubGroups(rows,hist){ const R=DATA&&DATA.rubGrp; if(!R||!R.length) return null;
-  return R.map(r=>{ if(hist) return {k:rubroName(r.k),v:r.v,n:r.n}; let v=0,n=0; r.items.forEach(s=>{ const w=s.toLowerCase(); rows.forEach(c=>{ if(String(c.n).toLowerCase().includes(w)){ v+=c.v; n++; } }); }); return {k:rubroName(r.k),v,n}; }); }
-function sinRubroNota(rows){ const R=DATA&&DATA.rubGrp; if(!R||!R.length) return ''; const ws=[].concat(...R.map(r=>r.items.map(s=>s.toLowerCase()))), m=rows.filter(c=>{ const s=String(c.n).toLowerCase(); return !ws.some(w=>s.includes(w)); });
+  return R.map(r=>{ if(hist) return {k:rubroName(r.k),v:r.v,n:r.n}; let v=0,n=0; r.items.forEach(s=>{ const w=s.toLowerCase(); rows.forEach(c=>{ if(hasEmp(c.n,w)){ v+=c.v; n++; } }); }); return {k:rubroName(r.k),v,n}; }); }
+function sinRubroNota(rows){ const R=DATA&&DATA.rubGrp; if(!R||!R.length) return ''; const ws=[].concat(...R.map(r=>r.items.map(s=>s.toLowerCase()))), m=rows.filter(c=>{ const s=String(c.n).toLowerCase(); return !ws.some(w=>hasEmp(s,w)); });
   return '<div class="ms" style="margin-top:6px">Compras sin rubro: '+nn(m.length)+' usos · '+ff(sum(m.map(c=>c.v)))+' gastados. Quedan fuera de este listado.</div>'; }
-function sinEmpNota(rows){ const B=empBase(); if(!B) return ''; const ws=B.map(b=>b.k.toLowerCase()), m=rows.filter(c=>{ const s=String(c.n).toLowerCase(); return !ws.some(w=>s.includes(w)); });
+function sinEmpNota(rows){ const B=empBase(); if(!B) return ''; const ws=B.map(b=>b.k.toLowerCase()), m=rows.filter(c=>{ const s=String(c.n).toLowerCase(); return !ws.some(w=>hasEmp(s,w)); });
   return '<div class="ms" style="margin-top:6px">Compras sin empresa de la lista: '+nn(m.length)+' usos · '+ff(sum(m.map(c=>c.v)))+' gastados. No aparecen en este ranking.</div>'; }
 function allRows(){ return DATA.compras.filter(c=>!c.dev); }
 function prevYear(y){ const i=YEARS.indexOf(y); return i>0?YEARS[i-1]:null; }
