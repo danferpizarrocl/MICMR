@@ -530,7 +530,7 @@ body[data-r="cuotas"] .hd .ct .u{white-space:normal;overflow:visible;text-overfl
 :root[data-theme="dark"] #jov .jc{background:#0f5d44;border-color:#ff6b66;color:#e9fff6}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) #jov .jc{background:#0f5d44;border-color:#ff6b66;color:#e9fff6}}
 #jov .jc .ct{font-size:19px;margin:0 0 12px;padding-right:38px;color:inherit}
-#jov .jx{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:2px solid currentColor;background:transparent;color:inherit;font-size:16px;font-weight:800;line-height:1}
+#jov .jx{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:2px solid currentColor;background:transparent;color:inherit;font-size:16px;font-weight:800;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
 #jov .jl{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:11px;flex:1}
 #jov .jl li{display:flex;justify-content:space-between;gap:10px;font-size:16px;font-weight:600;line-height:1.3}
 #jov .jl li b{font-weight:800;text-align:right;white-space:nowrap}
@@ -1580,7 +1580,7 @@ function jRender(){
   if(!o){ o=document.createElement('div'); o.id='jov'; document.body.appendChild(o);
     o.addEventListener('click',function(ev){ if(ev.target.closest('.jx')){ JCARDS=[]; JI=0; o.remove(); } else { JI++; jRender(); } ev.stopPropagation(); }); }
   const c=JCARDS[JI], fin=JI===JCARDS.length-1;
-  o.innerHTML='<div class="jc" role="dialog" aria-label="Aviso de carga"><button class="jx" type="button" aria-label="Cerrar todo">✕</button>'+c.t+c.b+'<div class="jn">'+(c.n?c.n+' · ':'')+(fin?'Toca para cerrar':'Toca para continuar')+'</div></div>';
+  o.innerHTML='<div class="jc" role="dialog" aria-label="Aviso de carga"><button class="jx" type="button" aria-label="Cerrar todo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>'+c.t+c.b+'<div class="jn">'+(c.n?c.n+' · ':'')+(fin?'Toca para cerrar':'Toca para continuar')+'</div></div>';
 }
 
 /* ===== MiCMR beta · pantallas, rutas y eventos ===== */
