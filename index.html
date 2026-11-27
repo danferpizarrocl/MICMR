@@ -1324,8 +1324,8 @@ function hRubros(){
   const g=MODE===0, fv=g?ff:nn, rows=allRows(), val=z=>g?z.v:z.n, den=g?sum(rows.map(c=>c.v)):sum(rows.map(c=>c.v>0?1:0));
   const rub=(rubGroups(rows,1)||groupBy(rows,c=>rubroOf(c))).filter(z=>z.k!=='Otros'&&val(z)>0).sort((a,b)=>g?b.v-a.v:(b.n-a.n||b.v-a.v)), tot=sum(rub.map(val))||1;
   let h=card('tag',g?'Distribución del gasto por rubro':'Distribución de usos por rubro','g',hbars(rub.map(z=>({label:z.k,v:val(z),sub:g?pc(z.v/tot):pc(z.n/tot)})),{fmt:fv,tier:true,limit:3})+sinRubroNota(rows));
-  if(g){ const top=rows.filter(c=>c.v>0).sort((a,b)=>b.v-a.v).slice(0,5);
-    h+=card('star','Top 5 mayores gastos históricos','o',(top.length>=3?podium(top.slice(0,3).map(c=>({k:c.n,v:c.v})),ff)+hbars(top.slice(3).map(c=>({label:c.n,v:c.v,sub:c.y})),{rank:true,fmt:ff,tier:true,start:3,nonote:1}):hbars(top.map(c=>({label:c.n,v:c.v,sub:c.y})),{rank:true,fmt:ff,tier:true}))); }
+  if(g){ const top=groupEmp(rows,1).filter(z=>z.v>0).sort((a,b)=>b.v-a.v||b.n-a.n).slice(0,5), us=z=>nn(z.n)+(z.n===1?' uso':' usos');
+    h+=card('star','Top 5 mayores gastos históricos','o',(top.length>=3?podium(top.slice(0,3).map(z=>({k:z.k,v:z.v})),ff)+hbars(top.slice(3).map(z=>({label:z.k,v:z.v,sub:us(z)})),{rank:true,fmt:ff,tier:true,start:3,nonote:1}):hbars(top.map(z=>({label:z.k,v:z.v,sub:us(z)})),{rank:true,fmt:ff,tier:true}))); }
   else { const top=groupEmp(rows,1).filter(z=>z.n>0).sort((a,b)=>b.n-a.n||b.v-a.v).slice(0,5);
     h+=card('star','Top 5 más usos históricos','o',(top.length>=3?podium(top.slice(0,3).map(z=>({k:z.k,v:z.n})),nn)+hbars(top.slice(3).map(z=>({label:z.k,v:z.n,sub:ff(z.v)})),{rank:true,fmt:nn,tier:true,start:3,nonote:1}):hbars(top.map(z=>({label:z.k,v:z.n,sub:ff(z.v)})),{rank:true,fmt:nn,tier:true}))); }
   const mxr=rub[0]?val(rub[0]):1;
