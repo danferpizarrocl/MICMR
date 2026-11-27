@@ -616,6 +616,8 @@ body[data-r="cuotas"] .hd .ct .u{white-space:normal;overflow:visible;text-overfl
 
 .cnx{color:var(--r);font-size:12.5px;font-weight:700;margin-top:4px}
 
+.lst .ms .cqv{display:inline;color:var(--g);font-weight:700}
+
 </style></head><body>
 <div id="splash"><div class="spc"><svg width="200" height="200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="0" fill="#2f6df0"/>
 <rect x="84" y="140" width="344" height="232" rx="34" fill="#fff"/>
@@ -1445,9 +1447,11 @@ function cuotaNext(c,np){
   const D=dt(k), late=k>=c.c?Math.round((hoy-D)/864e5):0;
   return '<div class="cnx">Próxima cuota: '+D.getDate()+' de '+MESL[D.getMonth()].toLowerCase()+' de '+D.getFullYear()+(late>0?' (ATRASADO '+late+(late===1?' DÍA)':' DÍAS)'):'')+'</div>';
 }
-function cuotaItem(c){
+function cuotaItem(c,i,arr){
+  /* fecha de compra entre paréntesis; con año si es de otro año que el actual o si la lista mezcla años */
+  const mix=Array.isArray(arr)&&new Set(arr.map(x=>x.y)).size>1, fc=c.d+' de '+MESL[c.m].toLowerCase()+(mix||c.y!==new Date().getFullYear()?' de '+c.y:'');
   const pg=c.pg||0, fa=c.fa||0, q=c.q||Math.round(c.v/c.c), known=c.pg!==null&&c.pg!==undefined, done=known&&fa<=0, fr=known&&c.v>0?Math.min(1,pg/c.v):0, np=known?Math.min(c.c,Math.round(fr*c.c)):0;
-  return '<div class="cu"><div class="cr1"><span>'+esc(c.n)+'</span><b>'+ff(c.v)+'</b></div><div class="ms">'+c.c+' cuotas de '+ff(q)+' · '+fdate(c)+'</div>'+(known?'<div class="pb'+(done?' dn':'')+'"><div style="width:'+(fr*100).toFixed(2)+'%;background:var(--g)"></div></div><div class="cr2">'+(done?'<strong class="okc">'+svgI('check',13,3)+' '+c.c+' de '+c.c+' · Completada</strong><em>Pagada</em>':'<strong>'+np+' de '+c.c+' cuotas pagadas</strong><em>Faltan '+ff(fa)+'</em>')+'</div>':'')+(done?'':cuotaNext(c,np))+'</div>';
+  return '<div class="cu"><div class="cr1"><span>'+esc(c.n)+'</span><b>'+ff(c.v)+'</b></div><div class="ms">'+c.c+' cuotas de <span class="cqv">'+ff(q)+'</span> ('+fc+')</div>'+(known?'<div class="pb'+(done?' dn':'')+'"><div style="width:'+(fr*100).toFixed(2)+'%;background:var(--g)"></div></div><div class="cr2">'+(done?'<strong class="okc">'+svgI('check',13,3)+' '+c.c+' de '+c.c+' · Completada</strong><em>Pagada</em>':'<strong>'+np+' de '+c.c+' cuotas pagadas</strong><em>Faltan '+ff(fa)+'</em>')+'</div>':'')+(done?'':cuotaNext(c,np))+'</div>';
 }
 function cuotaCard(icon,title,col,list,open){
   const body='<div class="lst">'+list.map(cuotaItem).join('')+'</div>';
