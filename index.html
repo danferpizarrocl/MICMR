@@ -533,7 +533,9 @@ body[data-r="cuotas"] .hd .ct .u{white-space:normal;overflow:visible;text-overfl
 #jov .jx{position:absolute;top:10px;right:10px;width:34px;height:34px;border-radius:50%;border:2px solid currentColor;background:transparent;color:inherit;font-size:16px;font-weight:800;line-height:1}
 #jov .jl{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:11px;flex:1}
 #jov .jl li{display:flex;justify-content:space-between;gap:10px;font-size:16px;font-weight:600;line-height:1.3}
-#jov .jl li b{font-weight:800;text-align:right}
+#jov .jl li b{font-weight:800;text-align:right;white-space:nowrap}
+#jov .jl li.jlast{flex-wrap:wrap}
+#jov .jl li.jlast em{flex:0 0 100%;font-style:normal;font-size:14px;font-weight:600;opacity:.85;overflow-wrap:anywhere}
 #jov .jh li{justify-content:flex-start;align-items:flex-start;gap:10px;font-weight:700}
 #jov .jh li i{flex:none;display:flex;margin-top:1px}
 #jov .jp{margin:6px 0;font-size:17px;font-weight:700;flex:1}
@@ -1562,8 +1564,8 @@ function jCards(OLD,d){
     const rows=N.filter(ok), L=Math.max.apply(null,rows.map(c=>c.y)), tn=jSum(rows.filter(c=>c.y===L)), to=jSum(OLD.compras.filter(c=>!c.dev&&c.y===L));
     const last=rows.filter(c=>c.v>0).reduce((a,c)=>(!a||(c.y*10000+c.m*100+c.d)>(a.y*10000+a.m*100+a.d))?c:a,null);
     let li='<li><span>Compras nuevas</span><b>+'+nn(aN)+'</b></li><li><span>Compras que ya no están</span><b>'+nn(rN)+'</b></li>';
-    if(tn!==to) li+='<li><span>Total de '+L+'</span><b>'+(tn>to?'▲ ':'▼ ')+ff(Math.abs(tn-to))+'</b></li>';
-    if(last) li+='<li><span>Última compra</span><b>'+jFecha(last)+'</b></li>';
+    if(tn!==to) li+='<li><span>Diferencia desde la última carga</span><b>'+(tn>to?'▲ ':'▼ ')+ff(Math.abs(tn-to))+'</b></li>';
+    if(last) li+='<li class="jlast"><span>Última compra</span><b>'+jFecha(last)+'</b><em>'+esc(last.n)+' · '+ff(last.v)+'</em></li>';
     cards.push({t:tl,b:'<ul class="jl">'+li+'</ul>'+warn});
   }
   const H=jHitos(OLD.compras,N,df.added), np=Math.ceil(H.length/3);
