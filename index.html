@@ -750,7 +750,24 @@ function buildData(sheets){
   /* lista de empresas desde la hoja BASE DATOS (columnas V empresa, W costo, X usos) */
   const base=[]; const bn=Object.keys(sheets).find(n=>/BASE DATOS/i.test(n));
   if(bn){ const rows=sheets[bn]; Object.keys(rows).map(Number).sort((a,b)=>a-b).forEach(k=>{ if(k<3) return; const r=rows[k]; if(typeof r.V!=='string') return; const nm=r.V.replace(/\s+/g,' ').trim(); if(!nm) return; base.push({k:nm,v:typeof r.W==='number'?Math.round(r.W):0,n:typeof r.X==='number'?Math.round(r.X):0}); }); }
-  return {compras,years,fecha:fechaTxt,rubros:rub,base,cargado:new Date().toISOString()};
+  /* rubros tal cual la hoja Análisis Histórico: cada rubro con sus empresas y su Total (gasto y usos) */
+  const rubGrp=[];
+  if(hn){ const rows=sheets[hn], keys=Object.keys(rows).map(Number).sort((a,b)=>a-b), bm={}; base.forEach(b=>{ bm[b.k.toLowerCase()]=b; });
+    const sm=a=>a.reduce((x,y)=>x+y,0);
+    for(const [L,V,N] of [['L','M','N'],['P','Q','R'],['T','U',null]]){
+      let cur=null;
+      const fin=()=>{ if(cur&&cur.items.length&&!/^ebay$/i.test(cur.k)) rubGrp.push({k:cur.k,items:cur.items.map(x=>x.k),v:cur.tv!=null?cur.tv:sm(cur.items.map(x=>x.v)),n:cur.tn!=null?cur.tn:sm(cur.items.map(x=>x.n))}); cur=null; };
+      for(const k of keys){ const r=rows[k], lab=r[L]; if(typeof lab!=='string') continue; const t=lab.replace(/\s+/g,' ').trim(); if(!t) continue;
+        if(/^porcentaje$/i.test(t)){ fin(); continue; }
+        if(/^(x̄|promedio|cant\. de pedidos|gastos por rubro.*)$/i.test(t)) continue;
+        if(/^total$/i.test(t)){ if(cur&&typeof r[V]==='number'){ cur.tv=Math.round(r[V]); cur.tn=(N&&typeof r[N]==='number')?Math.round(r[N]):null; } continue; }
+        if(typeof r[V]==='number'){ const bi=bm[t.toLowerCase()]; const it={k:t,v:Math.round(r[V]),n:(N&&typeof r[N]==='number')?Math.round(r[N]):(bi?bi.n:0)}; if(!cur) cur={k:t,items:[it]}; else cur.items.push(it); continue; }
+        if(/[A-Za-zÁÉÍÓÚÑáéíóúñ]/.test(t)&&t.length>2){ fin(); cur={k:t,items:[]}; }
+      }
+      fin();
+    }
+  }
+  return {compras,years,fecha:fechaTxt,rubros:rub,base,rubGrp,cargado:new Date().toISOString()};
 }
 if(typeof module!=='undefined') module.exports={readWorkbook,buildData,normEmp};
 
@@ -838,6 +855,10 @@ function empBase(){ return (DATA&&Array.isArray(DATA.base)&&DATA.base.length)?DA
 function groupEmp(rows,hist){ const B=empBase();
   if(B) return B.map(b=>{ if(hist) return {k:b.k,v:b.v,n:b.n}; const w=b.k.toLowerCase(), m=rows.filter(c=>String(c.n).toLowerCase().includes(w)); return {k:b.k,v:sum(m.map(c=>c.v)),n:m.length}; });
   const g=groupBy(rows,c=>c.e); COLEC.forEach(w=>{ const m=rows.filter(c=>String(c.n).toLowerCase().includes(w)); if(!m.length) return; const o={k:w.charAt(0).toUpperCase()+w.slice(1),v:sum(m.map(c=>c.v)),n:m.length}; const i=g.findIndex(z=>z.k.toLowerCase()===w); if(i>=0){ o.k=g[i].k; g[i]=o; } else g.push(o); }); return g; }
+function rubGroups(rows,hist){ const R=DATA&&DATA.rubGrp; if(!R||!R.length) return null;
+  return R.map(r=>{ if(hist) return {k:rubroName(r.k),v:r.v,n:r.n}; let v=0,n=0; r.items.forEach(s=>{ const w=s.toLowerCase(); rows.forEach(c=>{ if(String(c.n).toLowerCase().includes(w)){ v+=c.v; n++; } }); }); return {k:rubroName(r.k),v,n}; }); }
+function sinRubroNota(rows){ const R=DATA&&DATA.rubGrp; if(!R||!R.length) return ''; const ws=[].concat(...R.map(r=>r.items.map(s=>s.toLowerCase()))), m=rows.filter(c=>{ const s=String(c.n).toLowerCase(); return !ws.some(w=>s.includes(w)); });
+  return '<div class="ms" style="margin-top:6px">Compras sin rubro: '+nn(m.length)+' usos · '+ff(sum(m.map(c=>c.v)))+' gastados. Quedan fuera de este listado.</div>'; }
 function sinEmpNota(rows){ const B=empBase(); if(!B) return ''; const ws=B.map(b=>b.k.toLowerCase()), m=rows.filter(c=>{ const s=String(c.n).toLowerCase(); return !ws.some(w=>s.includes(w)); });
   return '<div class="ms" style="margin-top:6px">Compras sin empresa de la lista: '+nn(m.length)+' usos · '+ff(sum(m.map(c=>c.v)))+' gastados. No aparecen en este ranking.</div>'; }
 function allRows(){ return DATA.compras.filter(c=>!c.dev); }
@@ -1166,8 +1187,8 @@ function yDonde(y){
   const d=Y(y), g=MODE===0, fv=g?ff:nn; let h='';
   const top=topN(d.rows,5,g?'v':'n').filter(z=>(g?z.v:z.n)>0), val=z=>g?z.v:z.n;
   h+=card(g?'cash':'bars',g?'Gasto por comercio · top 5':'Usos por comercio · top 5',g?'o':'a',podium(top.map(z=>({k:z.k,v:val(z)})),fv)+hbars(top.map(z=>({label:z.k,v:val(z)})),{rank:true,fmt:fv,tier:true}));
-  const rub=groupBy(d.rows,c=>rubroOf(c)).filter(z=>z.k!=='Otros'&&(g?z.v:z.n)>0).sort((a,b)=>g?b.v-a.v:(b.n-a.n||b.v-a.v)), den=sum(rub.map(val));
-  h+=card('tag',g?'Gasto por rubro':'Usos por rubro','g',hbars(rub.map(z=>({label:z.k,v:val(z),sub:pc(den?val(z)/den:0)})),{fmt:fv,tier:true,limit:3})+'<div class="ms">Los tres primeros van en rojo, naranja y amarillo. Los rubros salen de la hoja Análisis Histórico de tu Excel; las compras sin rubro no se muestran aquí y los porcentajes son sobre los rubros mostrados.</div>');
+  const rub=(rubGroups(d.rows)||groupBy(d.rows,c=>rubroOf(c))).filter(z=>z.k!=='Otros'&&(g?z.v:z.n)>0).sort((a,b)=>g?b.v-a.v:(b.n-a.n||b.v-a.v)), den=sum(rub.map(val));
+  h+=card('tag',g?'Gasto por rubro':'Usos por rubro','g',hbars(rub.map(z=>({label:z.k,v:val(z),sub:pc(den?val(z)/den:0)})),{fmt:fv,tier:true,limit:3})+'<div class="ms">Los tres primeros van en rojo, naranja y amarillo. Los rubros salen de la hoja Análisis Histórico de tu Excel y los porcentajes son sobre los rubros mostrados.</div>'+sinRubroNota(d.rows));
   const L=groupEmp(d.rows).filter(z=>val(z)>0).sort((a,b)=>g?b.v-a.v:(b.n-a.n||b.v-a.v));
   h+=card('pin','Dónde se usó el dinero','t',hbars(L.map(z=>({label:z.k,v:val(z)})),{fmt:fv,tier:true,limit:3})+'<div class="ms">'+L.length+(L.length===1?' empresa':' empresas')+' en '+y+', ordenadas por '+(g?'gasto':'usos')+'. Las tres primeras van en rojo, naranja y amarillo.</div>'+sinEmpNota(d.rows));
   return h;
@@ -1286,8 +1307,8 @@ function hAcum(){
 }
 function hRubros(){
   const g=MODE===0, fv=g?ff:nn, rows=allRows(), val=z=>g?z.v:z.n, den=g?sum(rows.map(c=>c.v)):sum(rows.map(c=>c.v>0?1:0));
-  const rub=groupBy(rows,c=>rubroOf(c)).filter(z=>z.k!=='Otros'&&val(z)>0).sort((a,b)=>g?b.v-a.v:(b.n-a.n||b.v-a.v)), tot=sum(rub.map(val))||1;
-  let h=card('tag',g?'Distribución del gasto por rubro':'Distribución de usos por rubro','g',hbars(rub.map(z=>({label:z.k,v:val(z),sub:g?pc(z.v/tot):pc(z.n/tot)})),{fmt:fv,tier:true,limit:3}));
+  const rub=(rubGroups(rows,1)||groupBy(rows,c=>rubroOf(c))).filter(z=>z.k!=='Otros'&&val(z)>0).sort((a,b)=>g?b.v-a.v:(b.n-a.n||b.v-a.v)), tot=sum(rub.map(val))||1;
+  let h=card('tag',g?'Distribución del gasto por rubro':'Distribución de usos por rubro','g',hbars(rub.map(z=>({label:z.k,v:val(z),sub:g?pc(z.v/tot):pc(z.n/tot)})),{fmt:fv,tier:true,limit:3})+sinRubroNota(rows));
   if(g){ const top=rows.filter(c=>c.v>0).sort((a,b)=>b.v-a.v).slice(0,5);
     h+=card('star','Top 5 mayores gastos históricos','o',(top.length>=3?podium(top.slice(0,3).map(c=>({k:c.n,v:c.v})),ff)+hbars(top.slice(3).map(c=>({label:c.n,v:c.v,sub:c.y})),{rank:true,fmt:ff,tier:true,start:3,nonote:1}):hbars(top.map(c=>({label:c.n,v:c.v,sub:c.y})),{rank:true,fmt:ff,tier:true}))); }
   else { const top=groupEmp(rows,1).filter(z=>z.n>0).sort((a,b)=>b.n-a.n||b.v-a.v).slice(0,5);
