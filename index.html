@@ -1447,7 +1447,7 @@ function cuotaNext(c,np){
 }
 function cuotaItem(c){
   const pg=c.pg||0, fa=c.fa||0, q=c.q||Math.round(c.v/c.c), known=c.pg!==null&&c.pg!==undefined, done=known&&fa<=0, fr=known&&c.v>0?Math.min(1,pg/c.v):0, np=known?Math.min(c.c,Math.round(fr*c.c)):0;
-  return '<div class="cu"><div class="cr1"><span>'+esc(c.n)+'</span><b>'+ff(c.v)+'</b></div><div class="ms">'+c.c+' cuotas de '+ff(q)+' · '+fdate(c)+'</div>'+(known?'<div class="pb'+(done?' dn':'')+'"><div style="width:'+(fr*100).toFixed(2)+'%;background:var(--g)"></div></div><div class="cr2">'+(done?'<strong class="okc">'+svgI('check',13,3)+' '+c.c+' de '+c.c+' · Completada</strong><em>Pagada</em>':'<strong>'+np+' de '+c.c+' cuotas pagadas</strong><em>Faltan '+ff(fa)+'</em>')+'</div>'+(done?'':cuotaNext(c,np)):'')+'</div>';
+  return '<div class="cu"><div class="cr1"><span>'+esc(c.n)+'</span><b>'+ff(c.v)+'</b></div><div class="ms">'+c.c+' cuotas de '+ff(q)+' · '+fdate(c)+'</div>'+(known?'<div class="pb'+(done?' dn':'')+'"><div style="width:'+(fr*100).toFixed(2)+'%;background:var(--g)"></div></div><div class="cr2">'+(done?'<strong class="okc">'+svgI('check',13,3)+' '+c.c+' de '+c.c+' · Completada</strong><em>Pagada</em>':'<strong>'+np+' de '+c.c+' cuotas pagadas</strong><em>Faltan '+ff(fa)+'</em>')+'</div>':'')+(done?'':cuotaNext(c,np))+'</div>';
 }
 function cuotaCard(icon,title,col,list,open){
   const body='<div class="lst">'+list.map(cuotaItem).join('')+'</div>';
