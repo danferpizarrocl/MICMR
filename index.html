@@ -1439,7 +1439,7 @@ function cuoChart(tab,labels,cV,cN,dV,dN,ttl){
   const g=MODE===0, f=FC(), c=tab==='c', arr=c?(g?cV:cN):(g?dV:dN);
   if(!arr.some(v=>v>0)) return '';
   const all=arr.map((v,i)=>i).filter(i=>arr[i]>0), top=all.slice().sort((a,b)=>arr[b]-arr[a]).slice(0,3);
-  const cols=arr.map((v,i)=>{ const k=top.indexOf(i); return k>=0?RK_UP[k]:COL.o; });
+  const cols=arr.map((v,i)=>{ const k=top.indexOf(i); return k>=0?RK_UP[k]:CEL; });
   return card('bars',(c?'Cuotas ':'Devoluciones ')+ttl,'o',barsSVG([{vals:arr,color:COL.o,cols,lbl:all}],labels,{fmt:f})+'<div class="ms">Rojo, naranja y amarillo marcan los tres '+(labels.length===12?'meses':'años')+' con más '+(g?'monto':'usos')+'.</div>');
 }
 function cuotasHist(tab){
