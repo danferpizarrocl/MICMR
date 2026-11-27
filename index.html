@@ -614,6 +614,8 @@ body[data-r="cuotas"] .hd .ct .u{white-space:normal;overflow:visible;text-overfl
 .pbub{position:absolute;top:-11px;left:8px;z-index:2;display:inline-flex;align-items:center;gap:4px;max-width:calc(100% - 16px);padding:3px 10px;border-radius:999px;border:1.5px solid var(--r);background:var(--r);color:#fff;font:800 11.5px/1.25 inherit;white-space:nowrap;cursor:pointer}
 .pbub svg{flex:none}.pendp{margin-top:12px}.pendp[hidden]{display:none}
 
+.cnx{color:var(--r);font-size:12.5px;font-weight:700;margin-top:4px}
+
 </style></head><body>
 <div id="splash"><div class="spc"><svg width="200" height="200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="0" fill="#2f6df0"/>
 <rect x="84" y="140" width="344" height="232" rx="34" fill="#fff"/>
@@ -1435,9 +1437,17 @@ function cuoBtns(y,nc,vc,nd,vd,sub,sel,link){
   const n=pe.L.length, tt='Cuotas pendientes de '+pe.lab;
   return '<div class="cuow has">'+base+'<button type="button" class="pbub" data-act="pend" aria-label="'+n+' '+(n===1?'cuota pendiente':'cuotas pendientes')+' de '+pe.lab+'">'+svgI('bell',13,2.4)+' '+n+' '+(n===1?'pendiente':'pendientes')+' de '+pe.lab+'</button></div><div class="pendp" hidden>'+card('clock',tt,'o','<div class="lst">'+pe.L.map(cuotaItem).join('')+'</div>')+'</div>';
 }
+function cuotaNext(c,np){
+  /* corte de facturación: compra del 1 al 18 -> 1ª cuota el 5 del mes siguiente; del 19 en adelante -> el 5 del mes subsiguiente */
+  const off=c.d>=19?2:1, dt=k=>new Date(c.y,c.m+off+k-1,5), now=new Date(), hoy=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  let k=1; while(k<c.c&&dt(k)<=hoy) k++;
+  k=Math.max(k,Math.min(c.c,np+1));
+  const D=dt(k), late=k>=c.c?Math.round((hoy-D)/864e5):0;
+  return '<div class="cnx">Próxima cuota: '+D.getDate()+' de '+MESL[D.getMonth()].toLowerCase()+' de '+D.getFullYear()+(late>0?' (ATRASADO '+late+(late===1?' DÍA)':' DÍAS)'):'')+'</div>';
+}
 function cuotaItem(c){
   const pg=c.pg||0, fa=c.fa||0, q=c.q||Math.round(c.v/c.c), known=c.pg!==null&&c.pg!==undefined, done=known&&fa<=0, fr=known&&c.v>0?Math.min(1,pg/c.v):0, np=known?Math.min(c.c,Math.round(fr*c.c)):0;
-  return '<div class="cu"><div class="cr1"><span>'+esc(c.n)+'</span><b>'+ff(c.v)+'</b></div><div class="ms">'+c.c+' cuotas de '+ff(q)+' · '+fdate(c)+'</div>'+(known?'<div class="pb'+(done?' dn':'')+'"><div style="width:'+(fr*100).toFixed(2)+'%;background:var(--g)"></div></div><div class="cr2">'+(done?'<strong class="okc">'+svgI('check',13,3)+' '+c.c+' de '+c.c+' · Completada</strong><em>Pagada</em>':'<strong>'+np+' de '+c.c+' cuotas pagadas</strong><em>Faltan '+ff(fa)+'</em>')+'</div>':'')+'</div>';
+  return '<div class="cu"><div class="cr1"><span>'+esc(c.n)+'</span><b>'+ff(c.v)+'</b></div><div class="ms">'+c.c+' cuotas de '+ff(q)+' · '+fdate(c)+'</div>'+(known?'<div class="pb'+(done?' dn':'')+'"><div style="width:'+(fr*100).toFixed(2)+'%;background:var(--g)"></div></div><div class="cr2">'+(done?'<strong class="okc">'+svgI('check',13,3)+' '+c.c+' de '+c.c+' · Completada</strong><em>Pagada</em>':'<strong>'+np+' de '+c.c+' cuotas pagadas</strong><em>Faltan '+ff(fa)+'</em>')+'</div>'+(done?'':cuotaNext(c,np)):'')+'</div>';
 }
 function cuotaCard(icon,title,col,list,open){
   const body='<div class="lst">'+list.map(cuotaItem).join('')+'</div>';
@@ -1476,8 +1486,8 @@ function cuotasDetail(y,tab){
     if(hasPg){ const pc0=d.cuotaV>0?totPg/d.cuotaV:0;
       h+=card('check','Cuánto llevas pagado','g','<div class="hero" style="color:var(--g)">'+pc(pc0)+'</div><div class="pbl"><div style="width:'+(pc0*100).toFixed(2)+'%"></div></div><div class="g2 ctr cuk"><div><span class="ms">Pagado</span><b style="color:var(--g)">'+ff(totPg)+'</b></div><div><span class="ms">Faltante</span><b style="color:var(--o)">'+ff(totFa)+'</b></div></div>');
     } else h+=card('check','Cuánto llevas pagado','g','<div class="ms">Para ver cuánto llevas pagado, vuelve a cargar tu Excel (Más → Cargar Excel).</div>');
-    if(pend.length) h+=cuotaCard('clock',pend.length===1?'Compra faltante':'Compras faltantes','o',pend,true);
-    else h+=card('clock','Compras faltantes','o','<div class="ms">No queda ninguna por pagar</div>');
+    if(pend.length) h+=cuotaCard('clock',pend.length===1?'Pago faltante':'Pagos faltantes','o',pend,true);
+    else h+=card('clock','Pagos faltantes','o','<div class="ms">No queda ninguna por pagar</div>');
     if(paid.length) h+=cuotaCard('check',paid.length===1?'Compra pagada':'Compras pagadas','g',paid,false);
   } else {
     if(!dv.length) return h+card('ret','Devoluciones','o','<div class="ms">Sin devoluciones este año</div>');
