@@ -1282,7 +1282,7 @@ function hResumen(){
 }
 function hMeses(){
   const g=MODE===0, fv=FV(), cp=curPos(), get=(y,m)=>(g?Y(y).mt:Y(y).mu)[m];
-  let h=card('cal',g?'Mapa de calor: gasto por mes y año':'Mapa de calor: usos por mes y año','a',modeSw()+heat(YEARS,get,{g,na:(y,m)=>y===cp.y&&m>lastMonthIdx(y),cur:(y,m)=>y===cp.y&&m===cp.m}));
+  let h=card('cal',g?'Mapa de calor: gasto por mes y año':'Mapa de calor: usos por mes y año','a',modeSw()+heat(YEARS.slice().reverse(),get,{g,na:(y,m)=>y===cp.y&&m>lastMonthIdx(y),cur:(y,m)=>y===cp.y&&m===cp.m}));
   const all=[]; YEARS.forEach(y=>(g?Y(y).mt:Y(y).mu).forEach((v,m)=>{ if(v>0&&!(y===cp.y&&m>lastMonthIdx(y))) all.push({y,m,v}); })); all.sort((a,b)=>b.v-a.v);
   h+=card('up','Los 10 meses '+(g?'con más gasto':'con más usos'),'r',modeSw()+hbars(all.slice(0,10).map(o=>({label:MESL[o.m]+' '+o.y,v:o.v})),{rank:true,fmt:fv,tier:true}));
   return h;
@@ -1298,7 +1298,7 @@ function hAnios(){
   const g=MODE===0, a=histAgg(), ys=a.ys;
   let h=card('bars',g?'Gasto por año':'Usos por año','p',barsSVG([{vals:ys.map(d=>g?d.tot:d.n),color:COL.p,cols:(()=>{ const rc=rankCols(ys.map(d=>g?d.tot:d.n)); return ys.map((d,i)=>rc[i]||CEL); })()}],YEARS.map(String),{h:150,fmt:g?fm:nn})+'<div class="ms">Los tres años con más '+(g?'gasto':'usos')+' van en rojo, naranja y amarillo.</div>');
   h+=ovfCard(a.onV,a.offV,a.onN,a.offN,'Online vs tienda física · '+YEARS[0]+'–'+YEARS[YEARS.length-1],'swap','a');
-  h+=card('swap','Online vs tienda física por año','t','<div class="lst">'+ys.map(d=>{ const p=g?(d.tot?d.onV/d.tot:0):(d.n?d.onN/d.n:0); return '<div class="stk"><span>'+d.y+'</span><div class="sp s"><div style="width:'+(p*100).toFixed(2)+'%;background:var(--a)"></div><div style="flex:1;background:var(--o)"></div></div><b>'+pc(p)+'</b></div>'; }).join('')+'</div>'+legend([{color:COL.a,name:'Online'},{color:COL.o,name:'Tienda física'}]));
+  h+=card('swap','Online vs tienda física por año','t','<div class="lst">'+ys.slice().reverse().map(d=>{ const p=g?(d.tot?d.onV/d.tot:0):(d.n?d.onN/d.n:0); return '<div class="stk"><span>'+d.y+'</span><div class="sp s"><div style="width:'+(p*100).toFixed(2)+'%;background:var(--a)"></div><div style="flex:1;background:var(--o)"></div></div><b>'+pc(p)+'</b></div>'; }).join('')+'</div>'+legend([{color:COL.a,name:'Online'},{color:COL.o,name:'Tienda física'}]));
   const av=seasonAvgM(g), mi=av.indexOf(Math.max(...av));
   h+=card('cal','Estacionalidad · promedio por mes','r',barsSVG([{vals:av,color:'var(--r)'}],MC,{h:140,fmt:g?fm:nn})+'<div class="ms" style="margin-top:6px">Mes más fuerte: '+MESL[mi]+' ('+(g?ff(av[mi]):dec2(av[mi])+' usos')+'). Se promedian los años cerrados, sin el primero que fue parcial.</div>');
   { const vv=ys.map(d=>g?(d.n?d.tot/d.n:0):d.n/Math.max(1,d.mu.filter(x=>x>0).length)), rc=rankCols(vv);
