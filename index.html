@@ -610,6 +610,10 @@ body[data-r="cuotas"] .hd .ct .u{white-space:normal;overflow:visible;text-overfl
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--dn0:#2f6fed;--dn1:#6aa0f5;--dn2:#bfe0fa}}
 :root[data-theme="dark"]{--dn0:#2f6fed;--dn1:#6aa0f5;--dn2:#bfe0fa}
 
+.cuow{position:relative}.cuow.has{margin-top:14px}
+.pbub{position:absolute;top:-11px;left:8px;z-index:2;display:inline-flex;align-items:center;gap:4px;max-width:calc(100% - 16px);padding:3px 10px;border-radius:999px;border:1.5px solid var(--r);background:var(--r);color:#fff;font:800 11.5px/1.25 inherit;white-space:nowrap;cursor:pointer}
+.pbub svg{flex:none}.pendp{margin-top:12px}.pendp[hidden]{display:none}
+
 </style></head><body>
 <div id="splash"><div class="spc"><svg width="200" height="200" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="0" fill="#2f6df0"/>
 <rect x="84" y="140" width="344" height="232" rx="34" fill="#fff"/>
@@ -913,6 +917,7 @@ const IC={
   shop:'<path d="M4 8h16l-1 12H5z"/><path d="M9 8a3 3 0 016 0"/>',
   gauge:'<path d="M4 17a8 8 0 1116 0"/><path d="M12 17l4-5"/>',
   clock:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+  bell:'<path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/>',
   swap:'<path d="M7 7h12l-3-3M17 17H5l3 3"/>',
   grid:'<rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/>',
   search:'<circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/>',
@@ -1421,10 +1426,14 @@ function monthBlock(y,m,withMeta){
   return wrapLay('mes',h,1);
 }
 /* ---- desglose de cuotas y devoluciones ---- */
+function cuoPend(y){ if(typeof y!=='number') return null; const L=allRows().filter(c=>c.y<y&&c.c>0&&c.pg!==null&&c.pg!==undefined&&(c.fa||0)>0).sort((a,b)=>(b.fa||0)-(a.fa||0)); if(!L.length) return null; const ys=[...new Set(L.map(c=>c.y))]; return {L,lab:ys.length===1?String(ys[0]):'años anteriores'}; }
 function cuoBtns(y,nc,vc,nd,vd,sub,sel,link){
   const one=(k,ic,n,v,lab)=>{ const on=sel===k, clk=!!(sel||link); const tag=clk?'button':'div';
     return '<'+tag+' class="cuoh'+(on?' on':'')+(sel?' tab':'')+'"'+(clk?' data-go="cuotas:'+y+':'+k+'"'+(sel?' data-replace="1"':''):'')+'>'+svgI(ic,36,1.7)+'<b>'+n+'</b><span class="cl">'+lab+'</span><span class="cs">'+(sub?sub+' · ':'')+ff(v)+'</span>'+(link&&!sel?'<span class="vd">Ver desglose '+svgI('chev',13,2.8)+'</span>':'')+'</'+tag+'>'; };
-  return '<div class="cuo2 one">'+one('c','card',nc,vc,nc===1?'Compra en cuotas':'Compras en cuotas')+one('d','ret',nd,vd,nd===1?'Devolución':'Devoluciones')+'</div>';
+  const base='<div class="cuo2 one">'+one('c','card',nc,vc,nc===1?'Compra en cuotas':'Compras en cuotas')+one('d','ret',nd,vd,nd===1?'Devolución':'Devoluciones')+'</div>', pe=cuoPend(y);
+  if(!pe) return base;
+  const n=pe.L.length, tt='Cuotas pendientes de '+pe.lab;
+  return '<div class="cuow has">'+base+'<button type="button" class="pbub" data-act="pend" aria-label="'+n+' '+(n===1?'cuota pendiente':'cuotas pendientes')+' de '+pe.lab+'">'+svgI('bell',13,2.4)+' '+n+' '+(n===1?'pendiente':'pendientes')+' de '+pe.lab+'</button></div><div class="pendp" hidden>'+card('clock',tt,'o','<div class="lst">'+pe.L.map(cuotaItem).join('')+'</div>')+'</div>';
 }
 function cuotaItem(c){
   const pg=c.pg||0, fa=c.fa||0, q=c.q||Math.round(c.v/c.c), known=c.pg!==null&&c.pg!==undefined, done=known&&fa<=0, fr=known&&c.v>0?Math.min(1,pg/c.v):0, np=known?Math.min(c.c,Math.round(fr*c.c)):0;
@@ -1743,6 +1752,7 @@ document.addEventListener('click',e=>{
   else if(a==='edend'){ EDIT=null; render(); }
   else if(a==='copyexp'){ const t=$('expta'); t.select(); try{ navigator.clipboard.writeText(t.value).then(()=>toast('Copiado'),()=>toast('Selecciona el texto y cópialo a mano',true)); }catch(x){ toast('Selecciona el texto y cópialo a mano',true); } }
   else if(a==='mode'){ MODE=p[0]==='u'?1:0; const y=window.scrollY; render(); window.scrollTo&&window.scrollTo(0,y); }
+  else if(a==='pend'){ const w=el.closest('.cuow'), pp=w&&w.nextElementSibling; if(pp&&pp.classList.contains('pendp')){ pp.hidden=!pp.hidden; el.classList.toggle('open',!pp.hidden); } }
   else if(a==='mpick'){ const l=el.closest('.mpw').querySelector('.mlist'); if(l){ l.hidden=!l.hidden; el.classList.toggle('open',!l.hidden); } }
   else if(a==='msel'){ const yy=+p[0], mm=+p[1]; MSEL['y'+yy]=mm; const bx=$('mb'); if(bx){ bx.innerHTML=monthBlock(yy,mm,true); fitNotes(); } else render(); }
   else if(a==='cpick'){ MSEL[p[0]]=+p[1]; render(); }
