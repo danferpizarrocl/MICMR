@@ -663,11 +663,12 @@ function unent(s){
 function textOf(xml){ let t='',m; const re=/<t\b[^>]*>([\s\S]*?)<\/t>/g; while((m=re.exec(xml))) t+=m[1]; return unent(t); }
 function colOf(ref){ return ref.replace(/\d+/g,''); }
 function parseSheet(xml,sst){
-  const rows={}; let m; const re=/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
+  const rows={}, fm={}; let m; const re=/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g;
   while((m=re.exec(xml))){
     const at=m[1], body=m[2]; if(body==null) continue;
     const r=/\br="([A-Z]+)(\d+)"/.exec(at); if(!r) continue;
     const t=(/\bt="(\w+)"/.exec(at)||[])[1];
+    const fx=/<f\b[^>]*>([\s\S]*?)<\/f>/.exec(body); if(fx&&fx[1].indexOf('!')>=0&&fx[1].length<400) fm[r[1]+r[2]]=unent(fx[1]);
     let val=null;
     if(t==='inlineStr') val=textOf(body);
     else{
@@ -677,6 +678,7 @@ function parseSheet(xml,sst){
     if(val===null||val==='') continue;
     (rows[+r[2]]=rows[+r[2]]||{})[r[1]]=val;
   }
+  Object.defineProperty(rows,'__f',{value:fm,enumerable:false});
   return rows;
 }
 async function readWorkbook(buf){
@@ -728,7 +730,7 @@ function buildData(sheets){
       if(!tieneV&&/cancelar/i.test(nm)) continue;
       if(typeof r.A==='number'){ const dt=new Date(Date.UTC(1899,11,30)+r.A*86400000); mo=dt.getUTCMonth(); dd=dt.getUTCDate(); }
       const v=tieneV?Math.round(r.D):0;
-      compras.push({y,m:mo,d:dd,n:nm,e:normEmp(nm),on:(r.C===true||r.C===1)?1:0,v,c:(typeof r.E==='number'&&r.E>0)?r.E:0,q:(typeof r.E==='number'&&r.E>0&&typeof r.F==='number')?Math.round(r.F):null,pg:(typeof r.E==='number'&&r.E>0&&typeof r.V==='number')?Math.round(r.V):null,fa:(typeof r.E==='number'&&r.E>0&&typeof r.X==='number')?Math.max(0,Math.round(r.X)):null,dev:(v<0||/devoluci/i.test(nm))?1:0,r:k});
+      compras.push({y,m:mo,d:dd,n:nm,e:normEmp(nm),on:(r.C===true||r.C===1)?1:0,v,c:(typeof r.E==='number'&&r.E>0)?r.E:0,q:(typeof r.E==='number'&&r.E>0&&typeof r.F==='number')?Math.round(r.F):null,pg:(typeof r.E==='number'&&r.E>0&&typeof r.V==='number')?Math.round(r.V):null,fa:(typeof r.E==='number'&&r.E>0&&typeof r.X==='number')?Math.max(0,Math.round(r.X)):null,dev:(v<0||/devoluci/i.test(nm))?1:0,r:k,sh:name,rw:k});
     }
     years[y]={tot,usos};
   }
@@ -767,7 +769,16 @@ function buildData(sheets){
       fin();
     }
   }
-  return {compras,years,fecha:fechaTxt,rubros:rub,base,rubGrp,cargado:new Date().toISOString()};
+  /* compras de eBay que no son TCG: celdas que suma la fila GENERAL del Histórico (formula de esa fila) */
+  let gen=null;
+  if(hn){ const rows=sheets[hn], fm=rows.__f||{};
+    for(const k of Object.keys(rows).map(Number)){ const r=rows[k]; for(const L of Object.keys(r)){ if(typeof r[L]==='string'&&/^general$/i.test(r[L].trim())){
+      const VC=String.fromCharCode(L.charCodeAt(0)+1), f=fm[VC+k]; if(!f) continue; let mm; const re=/'([^']+)'!\$?([A-Z]+)\$?(\d+)/g, refs=[];
+      while((mm=re.exec(f))){ if(mm[2]==='D') refs.push([mm[1].trim(),+mm[3]]); }
+      if(!refs.length) continue; let n=0,v=0;
+      compras.forEach(c=>{ if(refs.some(x=>x[0]===c.sh.trim()&&x[1]===c.rw)){ c.gen=1; n++; v+=c.v; } });
+      if(n) gen={n,v}; } } } }
+  return {compras,years,fecha:fechaTxt,rubros:rub,base,rubGrp,gen,cargado:new Date().toISOString()};
 }
 if(typeof module!=='undefined') module.exports={readWorkbook,buildData,normEmp};
 
@@ -857,11 +868,12 @@ function groupEmp(rows,hist){ const B=empBase();
   if(B) return B.map(b=>{ if(hist) return {k:b.k,v:b.v,n:b.n}; const w=b.k.toLowerCase(), m=rows.filter(c=>hasEmp(c.n,w)); return {k:b.k,v:sum(m.map(c=>c.v)),n:m.length}; });
   const g=groupBy(rows,c=>c.e); COLEC.forEach(w=>{ const m=rows.filter(c=>String(c.n).toLowerCase().includes(w)); if(!m.length) return; const o={k:w.charAt(0).toUpperCase()+w.slice(1),v:sum(m.map(c=>c.v)),n:m.length}; const i=g.findIndex(z=>z.k.toLowerCase()===w); if(i>=0){ o.k=g[i].k; g[i]=o; } else g.push(o); }); return g; }
 function rubGroups(rows,hist){ const R=DATA&&DATA.rubGrp; if(!R||!R.length) return null;
-  return R.map(r=>{ if(hist) return {k:rubroName(r.k),v:r.v,n:r.n}; let v=0,n=0; r.items.forEach(s=>{ const w=s.toLowerCase(); rows.forEach(c=>{ if(hasEmp(c.n,w)){ v+=c.v; n++; } }); }); return {k:rubroName(r.k),v,n}; }); }
+  return R.map(r=>{ if(hist) return {k:rubroName(r.k),v:r.v,n:r.n}; let v=0,n=0; r.items.forEach(s=>{ const w=s.toLowerCase(); rows.forEach(c=>{ if(c.gen&&w==='ebay') return; if(hasEmp(c.n,w)){ v+=c.v; n++; } }); }); return {k:rubroName(r.k),v,n}; }); }
 function sinRubroNota(rows){ const R=DATA&&DATA.rubGrp; if(!R||!R.length) return ''; const ws=[].concat(...R.map(r=>r.items.map(s=>s.toLowerCase()))), m=rows.filter(c=>{ const s=String(c.n).toLowerCase(); return !ws.some(w=>hasEmp(s,w)); });
   return '<div class="ms" style="margin-top:6px">Compras sin rubro: '+nn(m.length)+' usos · '+ff(sum(m.map(c=>c.v)))+' gastados. Quedan fuera de este listado.</div>'; }
 function sinEmpNota(rows){ const B=empBase(); if(!B) return ''; const ws=B.map(b=>b.k.toLowerCase()), m=rows.filter(c=>{ const s=String(c.n).toLowerCase(); return !ws.some(w=>hasEmp(s,w)); });
-  return '<div class="ms" style="margin-top:6px">Compras sin empresa de la lista: '+nn(m.length)+' usos · '+ff(sum(m.map(c=>c.v)))+' gastados. No aparecen en este ranking.</div>'; }
+  return '<div class="ms" style="margin-top:6px">Compras sin empresa de la lista: '+nn(m.length)+' usos · '+ff(sum(m.map(c=>c.v)))+' gastados. No aparecen en este ranking.</div>'+ebayNota(rows); }
+function ebayNota(rows){ const g=rows.filter(c=>c.gen); if(!g.length) return ''; return '<div class="ms" style="margin-top:6px">Las compras de eBay se dividen en TCG y compras generales: '+nn(g.length)+' '+(g.length===1?'compra general':'compras generales')+' · '+ff(sum(g.map(c=>c.v)))+' (no cuentan en TCG).</div>'; }
 function allRows(){ return DATA.compras.filter(c=>!c.dev); }
 function prevYear(y){ const i=YEARS.indexOf(y); return i>0?YEARS[i-1]:null; }
 function seasonAvg(){ // promedio por mes de años cerrados (sin el primero, parcial, ni el actual)
